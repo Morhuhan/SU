@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление Весами</title>
+    <link rel="stylesheet" type="text/css" href="css/form.css">
+
+    <!-- Глобальные переменные JS -->
+    <script th:inline="javascript">
+        var currentPage = 1;
+        var tableName = 'Весы';
+        var order = ['Инвентарный_номер_весов','Модель','Дата_калибровки','Предел_измерений','Погрешность'];
+        var uniqueKeysArray = ['Инвентарный_номер_весов'];
+    </script>
+
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
+    <script th:inline="javascript" src="Utility/ScalesUtility.js"></script>
+</head>
+<body>
+<header>
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+
+    <!-- Выбор количества строк на странице -->
+    <div>
+        <label for="itemsPerPage">Строк на странице:</label>
+        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="100" selected>100</option>
+        </select>
+    </div>
+</header>
+
+<div id="submenu">
+    <ul>
+        <li><a href="/allocation">Allocation</a></li>
+        <li><a href="/classroom">Classroom</a></li>
+        <li><a href="/equipment">Equipment</a></li>
+        <li><a href="/equipmentType">Equipment Type</a></li>
+        <li><a href="/maintenance">Maintenance</a></li>
+        <li><a href="/seat">Seat</a></li>
+    </ul>
+</div>
+
+<div id="container1">
+    <div id="container2">
+        <div id="input">
+            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
+            <button type="button" onclick="ShowEditForm()">Изменить</button>
+            <button type="button" onclick="ShowCreateForm()">Создать</button>
+        </div>
+
+        <div id="forms">
+            <!-- Форма создания для Весов -->
+            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+
+                <h1>Создание Весов</h1>
+
+                <input type="text"
+                       id="create_inventoryNumber"
+                       name="Инвентарный_номер_весов"
+                       placeholder="Введите инвентарный номер для создания">
+
+                <label for="create_model">Модель:</label>
+                <input type="text"
+                       id="create_model"
+                       name="Модель">
+
+                <label for="create_calibrationDate">Дата калибровки:</label>
+                <input type="text"
+                       id="create_calibrationDate"
+                       name="Дата_калибровки">
+
+                <label for="create_measurementLimit">Предел измерения:</label>
+                <input type="text"
+                       id="create_measurementLimit"
+                       name="Предел_измерений">
+
+                <label for="create_error">Погрешность:</label>
+                <input type="text"
+                       id="create_error"
+                       name="Погрешность">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <!-- Форма изменения для Весов -->
+            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
+                <h1>Изменение Весов</h1>
+
+                <input type="text"
+                       id="edit_inventoryNumber"
+                       data-edit-field="Инвентарный_номер_весов"
+                       name="Инвентарный_номер_весов"
+                       placeholder="Введите инвентарный номер для изменения">
+
+                <label for="edit_model">Модель:</label>
+                <input type="text"
+                       id="edit_model"
+                       data-edit-field="Модель"
+                       name="Модель">
+
+                <label for="edit_calibrationDate">Дата калибровки:</label>
+                <input type="text"
+                       id="edit_calibrationDate"
+                       data-edit-field="Дата_калибровки"
+                       name="Дата_калибровки">
+
+                <label for="edit_measurementLimit">Предел измерения:</label>
+                <input type="text"
+                       id="edit_measurementLimit"
+                       data-edit-field="Предел_измерений"
+                       name="Предел_измерений">
+
+                <label for="edit_error">Погрешность:</label>
+                <input type="text"
+                       id="edit_error"
+                       data-edit-field="Погрешность"
+                       name="Погрешность">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <!-- Форма удаления для Весов -->
+            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                <h1>Удаление Весов</h1>
+
+                    <input type="text"
+                           id="delete_inventoryNumber"
+                           data-delete-field="Инвентарный_номер_весов"
+                           name="Инвентарный_номер_весов"
+                           placeholder="Введите инвентарный номер для удаления">
+                    <button type="submit">Отправить</button>
+            </form>
+
+        </div>
+    </div>
+
+    <div id="table">
+        <table>
+            <thead>
+            <tr>
+                <th>Инвентарный номер</th>
+                <th>Модель</th>
+                <th>Дата калибровки</th>
+                <th>Предел измерения</th>
+                <th>Погрешность</th>
+            </tr>
+            </thead>
+            <tbody data-table-type="scales">
+            <!-- Здесь будет динамически заполняться таблица -->
+            </tbody>
+        </table>
+
+        <!-- Место под панель навигации -->
+        <div id="navigationPanel"></div>
+    </div>
+</div>
+</body>
+</html>
