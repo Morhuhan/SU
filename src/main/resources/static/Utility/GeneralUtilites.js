@@ -1,10 +1,6 @@
-function toggleMenu() {
+function toggleMenu(display) {
     var submenu = document.getElementById("submenu");
-    if (submenu.style.display === "none" || submenu.style.display === "") {
-        submenu.style.display = "block";
-    } else {
-        submenu.style.display = "none";
-    }
+    submenu.style.display = display;
 }
 
 function ShowDeleteForm() {
@@ -45,4 +41,43 @@ function wrongDateAlert() {
 function wrongTimestampAlert() {
 alert("Неверный формат timestamp. Пожалуйста, введите дату и время в правильном формате: 'YYYY-MM-DD HH:MM:SS.mmm', где YYYY обозначает год, MM — месяц, DD — день, HH — часы, MM — минуты, SS — секунды, а mmm — миллисекунды.");
 }
+
+function enableStickyScrolling(elements) {
+    elements.forEach(function(element) {
+        var rect = element.getBoundingClientRect();
+        var originalOffsetY = rect.top + window.pageYOffset;
+        var originalOffsetX = rect.left + window.pageXOffset;
+
+        var placeholder = document.createElement('div');
+        placeholder.style.width = rect.width + 'px';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.display = 'none';
+
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > originalOffsetY) {
+                if (!element.classList.contains('sticky')) {
+                    element.classList.add('sticky');
+                    element.style.left = originalOffsetX + 'px';
+                    element.style.width = rect.width + 'px';
+                    element.parentNode.insertBefore(placeholder, element);
+                    placeholder.style.display = 'block';
+                }
+            } else {
+                if (element.classList.contains('sticky')) {
+                    element.classList.remove('sticky');
+                    element.style.left = '';
+                    element.style.width = '';
+                    element.parentNode.removeChild(placeholder);
+                    placeholder.style.display = 'none';
+                }
+            }
+        });
+    });
+}
+
+
+
+
+
+
 

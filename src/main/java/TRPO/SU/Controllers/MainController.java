@@ -1,6 +1,5 @@
 package TRPO.SU.Controllers;
 
-import TRPO.SU.Services.MainService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Controller;
@@ -12,15 +11,36 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Getter
 public class MainController {
 
-    public final MainService mainService;
-
-    public MainController(MainService mainService) {
-        this.mainService = mainService;
-    }
+    public MainController() {}
 
     @GetMapping("/scales")
     public String showScales(Model model) {
         return "scalesForm.html";
+    }
+
+    @GetMapping("/ZBM")
+    public String showZBM(Model model) {
+        return "ZBM.html";
+    }
+
+    @GetMapping("/building")
+    public String showBuilding(Model model) {
+        return "BuildingForm.html";
+    }
+
+    @GetMapping("/room")
+    public String showRoom(Model model) {
+        return "RoomForm.html";
+    }
+
+    @GetMapping("/employee")
+    public String showEmployee(Model model) {
+        return "EmployeeForm.html";
+    }
+
+    @GetMapping("/invoice")
+    public String showInvoice(Model model) {
+        return "InvoiceForm.html";
     }
 
 }

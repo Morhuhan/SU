@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление Весами</title>
+    <link rel="stylesheet" type="text/css" href="css/form.css">
+
+    <!-- Глобальные переменные JS -->
+    <script th:inline="javascript">
+        var currentPage = 1;
+        var tableName = 'Сотрудник';
+        var uniqueKeysArray = ['Номер_сотрудника'];
+    </script>
+
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
+</head>
+<body>
+<header>
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+
+    <!-- Выбор количества строк на странице -->
+    <div>
+        <label for="itemsPerPage">Строк на странице:</label>
+        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="100" selected>100</option>
+        </select>
+    </div>
+</header>
+
+<div id="submenu">
+    <ul>
+        <li><a href="/building">Здания</a></li>
+        <li><a href="/room">Помещения</a></li>
+        <li><a href="/ZBM">ЗБМ</a></li>
+        <li><a href="/Scales">Весы</a></li>
+    </ul>
+</div>
+
+<div id="container1">
+    <div id="container2">
+        <div id="input">
+            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
+            <button type="button" onclick="ShowEditForm()">Изменить</button>
+            <button type="button" onclick="ShowCreateForm()">Создать</button>
+        </div>
+
+        <div id="forms">
+            <!-- Форма создания для Сотрудников -->
+            <form id="createEmployeeForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+
+                <h1>Создание Сотрудника</h1>
+
+                <input type="text"
+                       id="create_employeeNumber"
+                       name="Номер_сотрудника"
+                       placeholder="Введите номер сотрудника">
+
+                <input type="text"
+                       id="create_managerNumber"
+                       name="Начальник"
+                       placeholder="Введите номер начальника">
+
+                <input type="text"
+                       id="create_positionNumber"
+                       name="Номер_должности"
+                       placeholder="Введите номер должности">
+
+                <input type="text"
+                       id="create_passportNumber"
+                       name="Номер_паспорта"
+                       placeholder="Введите номер паспорта">
+
+                <input type="text"
+                       id="create_firstName"
+                       name="Имя"
+                       placeholder="Введите имя">
+
+                <input type="text"
+                       id="create_lastName"
+                       name="Фамилия"
+                       placeholder="Введите фамилию">
+
+                <input type="text"
+                       id="create_middleName"
+                       name="Отчество"
+                       placeholder="Введите отчество">
+
+                <input type="text"
+                       id="create_phoneNumber"
+                       name="Номер_телефона"
+                       placeholder="Введите номер телефона">
+
+                <input type="text"
+                       id="create_address"
+                       name="Адрес"
+                       placeholder="Введите адрес">
+
+                <input type="text"
+                       id="create_gender"
+                       name="Пол"
+                       placeholder="Введите пол (М/Ж)">
+
+                <input type="text"
+                       id="create_birthDate"
+                       name="Дата_рождения"
+                       placeholder="Введите дату рождения">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <form id="editEmployeeForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+
+                <h1>Создание Сотрудника</h1>
+
+                <input type="text"
+                       id="edit_employeeNumber"
+                       name="Номер_сотрудника"
+                       placeholder="Введите номер сотрудника">
+
+                <input type="text"
+                       id="edit_managerNumber"
+                       name="Начальник"
+                       placeholder="Введите номер начальника">
+
+                <input type="text"
+                       id="edit_positionNumber"
+                       name="Номер_должности"
+                       placeholder="Введите номер должности">
+
+                <input type="text"
+                       id="edit_passportNumber"
+                       name="Номер_паспорта"
+                       placeholder="Введите номер паспорта">
+
+                <input type="text"
+                       id="edit_firstName"
+                       name="Имя"
+                       placeholder="Введите имя">
+
+                <input type="text"
+                       id="edit_lastName"
+                       name="Фамилия"
+                       placeholder="Введите фамилию">
+
+                <input type="text"
+                       id="edit_middleName"
+                       name="Отчество"
+                       placeholder="Введите отчество">
+
+                <input type="text"
+                       id="edit_phoneNumber"
+                       name="Номер_телефона"
+                       placeholder="Введите номер телефона">
+
+                <input type="text"
+                       id="edit_address"
+                       name="Адрес"
+                       placeholder="Введите адрес">
+
+                <input type="text"
+                       id="edit_gender"
+                       name="Пол"
+                       placeholder="Введите пол (М/Ж)">
+
+                <input type="text"
+                       id="edit_birthDate"
+                       name="Дата_рождения"
+                       placeholder="Введите дату рождения">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <!-- Форма удаления для Сотрудников -->
+            <form id="deleteEmployeeForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                <h1>Удаление Сотрудника</h1>
+
+                <input type="text"
+                       id="delete_employeeNumber"
+                       name="Номер_сотрудника"
+                       placeholder="Введите номер сотрудника для удаления">
+                <button type="submit">Отправить</button>
+            </form>
+
+        </div>
+    </div>
+
+    <div id="table">
+        <table>
+            <thead>
+            <tr>
+                <th name="Номер_сотрудника">Номер сотрудника</th>
+                <th name="Начальник">Начальник</th>
+                <th name="Номер_должности">Номер должности</th>
+                <th name="Номер_паспорта">Номер паспорта</th>
+                <th name="Имя">Имя</th>
+                <th name="Фамилия">Фамилия</th>
+                <th name="Отчество">Отчество</th>
+                <th name="Номер_телефона">Номер телефона</th>
+                <th name="Адрес">Адрес</th>
+                <th name="Пол">Пол</th>
+                <th name="Дата_рождения">Дата рождения</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Здесь будет динамически заполняться таблица -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

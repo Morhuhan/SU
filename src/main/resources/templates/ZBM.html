@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление Весами</title>
+    <link rel="stylesheet" type="text/css" href="css/form.css">
+
+    <!-- Глобальные переменные JS -->
+    <script th:inline="javascript">
+        var currentPage = 1;
+    </script>
+
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
+</head>
+<body>
+<header>
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+
+    <!-- Выбор количества строк на странице -->
+    <div>
+        <label for="itemsPerPage">Строк на странице:</label>
+        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+            <option value="100" selected>100</option>
+        </select>
+    </div>
+</header>
+
+<div id="submenu">
+    <ul>
+        <li><a href="/building">Здания</a></li>
+        <li><a href="/room">Помещения</a></li>
+        <li><a href="/ZBM">ЗБМ</a></li>
+        <li><a href="/Scales">Весы</a></li>
+    </ul>
+</div>
+
+<div id="container1">
+    <div id="container2">
+        <div id="input">
+            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
+            <button type="button" onclick="ShowEditForm()">Изменить</button>
+            <button type="button" onclick="ShowCreateForm()">Создать</button>
+        </div>
+
+        <div id="forms">
+            <!-- Форма создания для ZBM -->
+            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+
+                <h1>Создание ЗБМ</h1>
+
+                <input type="text"
+                       id="create_zbmNumber"
+                       name="Номер_ЗБМ"
+                       placeholder="Введите номер ЗБМ для создания">
+
+                <label for="create_area">Площадь:</label>
+                <input type="text"
+                       id="create_area"
+                       name="Площадь">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <!-- Форма изменения для ZBM -->
+            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
+                <h1>Изменение ЗБМ</h1>
+
+                <input type="text"
+                       id="edit_zbmNumber"
+                       data-edit-field="Номер_ЗБМ"
+                       name="Номер_ЗБМ"
+                       placeholder="Введите номер ЗБМ для изменения">
+
+                <label for="edit_area">Площадь:</label>
+                <input type="text"
+                       id="edit_area"
+                       data-edit-field="Площадь"
+                       name="Площадь">
+
+                <button type="submit">Отправить</button>
+            </form>
+
+            <!-- Форма удаления для ZBM -->
+            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                <h1>Удаление ЗБМ</h1>
+
+                <input type="text"
+                       id="delete_zbmNumber"
+                       data-delete-field="Номер_ЗБМ"
+                       name="Номер_ЗБМ"
+                       placeholder="Введите номер ЗБМ для удаления">
+                <button type="submit">Отправить</button>
+            </form>
+
+        </div>
+    </div>
+
+
+
+
+    <div>
+
+        <!-- Место под панель навигации -->
+        <div id="navigationPanel"></div>
+
+        <table id="table" class="mainTable" name="Зона_баланса_материалов">
+            <thead>
+            <tr>
+                <th name = "Номер_ЗБМ" >Номер ЗБМ</th>
+                <th name = "Площадь">Площадь </th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Здесь будет динамически заполняться таблица -->
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

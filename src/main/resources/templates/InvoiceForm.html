@@ -8,15 +8,22 @@
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var elements = [
+                document.getElementById('container2'),
+                document.getElementById('UECreationMenu')
+            ];
+            enableStickyScrolling(elements);
+        });
     </script>
 
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
-    <script th:inline="javascript" src="Utility/ScalesUtility.js"></script>
 </head>
 <body>
 <header>
-    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
     <div>
@@ -45,22 +52,17 @@
         <div id="input">
             <button type="button" onclick="ShowDeleteForm()">Удалить</button>
             <button type="button" onclick="ShowEditForm()">Изменить</button>
-            <button type="button" onclick="ShowCreateForm()">Создать</button>
+            <button type="button" onclick="ModalCreateInvoice()">Создать</button>
         </div>
 
         <div id="forms">
             <!-- Форма создания для Накладная -->
             <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                <h1>Создание Накладной</h1>
-                <label for="create_signDate">Дата подписания:</label>
-                <input type="text"
-                       id="create_signDate"
-                       name="Дата_подписания"
-                       placeholder="Введите дату подписания">
+            <h1>Создание Накладной</h1>
 
-                <label for="create_waybillNumber">Номер накладной:</label>
+                <label for="create_invoiceNumber">Номер накладной:</label>
                 <input type="text"
-                       id="create_waybillNumber"
+                       id="create_invoiceNumber"
                        name="Номер_накладной"
                        placeholder="Введите номер накладной">
 
@@ -69,67 +71,60 @@
                        id="create_employeeNumber"
                        name="Номер_сотрудника"
                        placeholder="Введите номер сотрудника">
+
+                <label for="create_signDate">Дата подписания:</label>
+                <input type="text"
+                       id="create_signDate"
+                       name="Дата_подписания"
+                       placeholder="Введите дату подписания">
+
                 <button type="submit">Отправить</button>
             </form>
 
             <!-- Форма изменения для Накладная -->
             <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
                 <h1>Изменение Накладной</h1>
+
+                <label for="edit_invoiceNumber">Номер накладной:</label>
+                <input type="text"
+                       id="edit_invoiceNumber"
+                       name="Номер_накладной">
+
                 <label for="edit_signDate">Дата подписания:</label>
                 <input type="text"
                        id="edit_signDate"
                        name="Дата_подписания">
 
-                <label for="edit_waybillNumber">Номер накладной:</label>
-                <input type="text"
-                       id="edit_waybillNumber"
-                       name="Номер_накладной">
-
                 <label for="edit_employeeNumber">Номер сотрудника:</label>
                 <input type="text"
                        id="edit_employeeNumber"
                        name="Номер_сотрудника">
+
                 <button type="submit">Отправить</button>
             </form>
 
             <!-- Форма удаления для Накладная -->
-            <form id="deleteWaybillForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                <h1>Удаление Накладной</h1>
-                <label for="delete_signDate">Дата подписания:</label>
-                <input type="text"
-                       id="delete_signDate"
-                       name="Дата_подписания"
-                       placeholder="Введите дату подписания для удаления">
-
-                <label for="delete_waybillNumber">Номер накладной:</label>
-                <input type="text"
-                       id="delete_waybillNumber"
-                       name="Номер_накладной"
-                       placeholder="Введите номер накладной для удаления">
-
-                <label for="delete_employeeNumber">Номер сотрудника:</label>
-                <input type="text"
-                       id="delete_employeeNumber"
-                       name="Номер_сотрудника"
-                       placeholder="Введите номер сотрудника для удаления">
+            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+            <label for="delete_invoiceNumber">Номер накладной:</label>
+            <input type="text"
+                   id="delete_invoiceNumber"
+                   name="Номер_накладной"
+                   placeholder="Введите номер накладной для удаления">
                 <button type="submit">Отправить</button>
             </form>
         </div>
     </div>
 
     <div>
-
         <!-- Место под панель навигации -->
         <div id="navigationPanel"></div>
 
-        <table id="table" class="mainTable" name="Весы">
+        <table id="table" class="mainTable" name="Накладная">
             <thead>
             <tr>
-                <th name="Инвентарный_номер_весов">Инвентарный номер</th>
-                <th name="Модель">Модель</th>
-                <th name="Дата_калибровки">Дата калибровки</th>
-                <th name="Предел_измерений">Предел измерения</th>
-                <th name="Погрешность">Погрешность</th>
+                <th name="Номер_накладной">Номер накладной</th>
+                <th name="Номер_сотрудника">Номер сотрудника</th>
+                <th name="Дата_подписания">Дата подписания</th>
             </tr>
             </thead>
             <tbody>
@@ -137,6 +132,39 @@
             </tbody>
         </table>
     </div>
+
+    <div id="UECreationMenu">
+        <div id="UECreationMenu_header">
+            <div> Накладная номер </div>
+            <div id="UECreationMenu_number">
+                <!-- Место для номера накладной -->
+            </div>
+        </div>
+
+        <div id="UECreationMenu_table" >
+            <table class="table" name="Весы">
+                <thead>
+                <tr>
+                    <th name="Серийный_номер">Серийный номер</th>
+                    <th name="Тип_материала">Тип материала</th>
+                    <th name="Номер_ЗБМ">Номер ЗБМ</th>
+                    <th name="Номер_здания">Номер здания</th>
+                    <th name="Номер_помещения">Номер помещения</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Здесь будет динамически заполняться таблица -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="UEContainer1">
+            <input type="text" id="searchField" placeholder="Введите серийный номер для поиска">
+            <button class="submitButton">Создать</button>
+        </div>
+    </div>
 </div>
+
+
 </body>
 </html>
