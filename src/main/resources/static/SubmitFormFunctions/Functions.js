@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     UpdateNavigationPanel();
     GetPageFromTable(1);
-    AddSortingToTableHeaders(mainTable);
     AttachDataSourceRowClick();
+    AddSortingToTableHeaders(mainTable);
 });
 
 function AddRowToTable(jsonRow, table) {
@@ -34,7 +34,7 @@ function AddRowToTable(jsonRow, table) {
 function GetPageFromTable(pageNumber) {
     currentPage = pageNumber;
     var itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
     var tableBody = mainTable.querySelector('tbody');
 
@@ -74,6 +74,45 @@ function GetPageFromTable(pageNumber) {
         console.error('There has been a problem with your fetch operation:', error);
         alert(error.message);
     });
+}
+
+function AddSortingToTableHeaders(table) {
+    var headers = table.getElementsByTagName("th");
+    for (let i = 0; i < headers.length; i++) {
+        headers[i].addEventListener("click", function() {
+            SortTable(table, i);
+        });
+    }
+}
+
+function SortTable(table, columnIndex) {
+    var rows, switching, i, x, y, shouldSwitch;
+    switching = true;
+    // Продолжаем цикл до тех пор, пока не будет выполнено ни одной перестановки
+    while (switching) {
+        switching = false;
+        rows = table.getElementsByTagName("TR");
+        // Проходим по всем строкам таблицы, кроме заголовка
+        for (i = 1; i < (rows.length - 1); i++) {
+            shouldSwitch = false;
+            // Получаем сравниваемые элементы
+            x = rows[i].getElementsByTagName("TD")[columnIndex];
+            y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
+            // Проверяем, являются ли значения числами
+            var xValue = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML);
+            var yValue = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML);
+            // Определяем, должны ли элементы поменяться местами
+            if (xValue > yValue) {
+                shouldSwitch = true;
+                break;
+            }
+        }
+        if (shouldSwitch) {
+            // Если элементы должны поменяться местами, выполняем перестановку и помечаем, что была выполнена перестановка
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+        }
+    }
 }
 
 function formatDataWithPrefix(data, prefix) {
@@ -142,7 +181,7 @@ function SubmitCreateForm(event) {
     var inputs = form.getElementsByTagName('input');
 
     var objectData = {};
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
 
     for (var i = 0; i < inputs.length; i++) {
@@ -177,7 +216,7 @@ function SubmitCreateForm(event) {
 function SubmitEditForm(event) {
     event.preventDefault();
 
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
 
     var formData = new FormData(document.getElementById('editForm'));
@@ -219,7 +258,7 @@ function SubmitEditForm(event) {
 function SubmitDeleteForm(event) {
     event.preventDefault();
 
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
 
     var formData = new FormData(document.getElementById('deleteForm'));
@@ -265,7 +304,7 @@ function SubmitDeleteForm(event) {
 function UpdateNavigationPanel() {
     var itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
     var navigationPanel = document.getElementById('navigationPanel');
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
 
     navigationPanel.innerHTML = '';
@@ -327,7 +366,7 @@ function UpdateNavigationPanel() {
 
 function TableRowClick() {
     var cells = this.cells; // Получаем ячейки текущей строки
-    var mainTable = document.querySelector('.mainTable');
+    var mainTable = document.getElementById('mainTable');
     var columns = mainTable.getElementsByTagName('th'); // Получаем колонки таблицы
 
     // Получаем формы для редактирования и удаления
@@ -366,45 +405,6 @@ function TableRowClick() {
 
     // Добавляем класс "selected" к текущей строке, чтобы выделить её
     this.classList.add("selected");
-}
-
-function AddSortingToTableHeaders(table) {
-    var headers = table.getElementsByTagName("th");
-    for (let i = 0; i < headers.length; i++) {
-        headers[i].addEventListener("click", function() {
-            SortTable(table, i);
-        });
-    }
-}
-
-function SortTable(table, columnIndex) {
-    var rows, switching, i, x, y, shouldSwitch;
-    switching = true;
-    // Продолжаем цикл до тех пор, пока не будет выполнено ни одной перестановки
-    while (switching) {
-        switching = false;
-        rows = table.getElementsByTagName("TR");
-        // Проходим по всем строкам таблицы, кроме заголовка
-        for (i = 1; i < (rows.length - 1); i++) {
-            shouldSwitch = false;
-            // Получаем сравниваемые элементы
-            x = rows[i].getElementsByTagName("TD")[columnIndex];
-            y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
-            // Проверяем, являются ли значения числами
-            var xValue = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML);
-            var yValue = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML);
-            // Определяем, должны ли элементы поменяться местами
-            if (xValue > yValue) {
-                shouldSwitch = true;
-                break;
-            }
-        }
-        if (shouldSwitch) {
-            // Если элементы должны поменяться местами, выполняем перестановку и помечаем, что была выполнена перестановка
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-        }
-    }
 }
 
 function AttachDataSourceRowClick() {
@@ -464,7 +464,7 @@ function DataSourceRowClick(element, form) {
         return response.json();
     })
     .then(result => {
-        DataSourceCreateModal(result, element);
+        CreateModalDataSource(result, element);
     })
     .catch(error => {
         alert(error.message);
@@ -472,23 +472,24 @@ function DataSourceRowClick(element, form) {
     });
 }
 
-function DataSourceCreateModal(data, element) {
-    // Создаем элемент модального окна
-    var modal = document.createElement('div');
-    modal.setAttribute('class', 'modal');
+function CreateModalDataSource(data, element) {
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.classList.add('modal');
+    modal.id = 'modalDataSource';
 
-    // Создаем элемент таблицы
-    var table = document.createElement('table');
-    table.setAttribute('class', 'table');
+    // Создаем таблицу
+    const table = document.createElement('table');
+    table.classList.add('table');
 
-    // Получаем порядок столбцов из атрибута data-columns-order
-    var columnsOrder = element.getAttribute('data-columns-order').split(', ');
+    // Получаем порядок столбцов из data-columns-order у element
+    const dataOrder = element.getAttribute('data-columns-order').split(', ');
 
     // Создаем заголовки таблицы на основе columnsOrder
-    var thead = document.createElement('thead');
-    var headerRow = document.createElement('tr');
-    columnsOrder.forEach(function(column) {
-        var th = document.createElement('th');
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    dataOrder.forEach(column => {
+        const th = document.createElement('th');
         th.textContent = column;
         headerRow.appendChild(th);
     });
@@ -496,107 +497,169 @@ function DataSourceCreateModal(data, element) {
     table.appendChild(thead);
 
     // Создаем тело таблицы
-    var tbody = document.createElement('tbody');
+    const tbody = document.createElement('tbody');
 
-    // Проверяем, что data содержит массив JSON строк
-    if (Array.isArray(data) && data.length > 0) {
-        // Парсим каждую JSON строку в объект и добавляем строки в таблицу
-        data.forEach(function(jsonString) {
-            var item = JSON.parse(jsonString); // Парсим JSON строку в объект
-            var row = document.createElement('tr');
+    // Добавляем данные в тело таблицы
+    AddDataToTable(data, tbody, dataOrder);
 
-            columnsOrder.forEach(function(column) {
-                var td = document.createElement('td');
-                // Используем column для получения значения из объекта item
-                td.textContent = item[column] || ''; // Если ключа нет, вставляем пустую строку
-                td.setAttribute('data-field-name', column);
-                row.appendChild(td);
-            });
+    // Добавляем тело таблицы в таблицу
+    table.appendChild(tbody);
 
-            // Навешиваем обработчик события onclick на каждую строку
-            row.addEventListener('click', function() {
-                DataSourceModalRowClick(element, this);
-                var event = new Event('input', { bubbles: true });
-                element.dispatchEvent(event);
-            });
-            tbody.appendChild(row);
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        row.addEventListener('click', function() {
+            DataSourceModalRowClick(element, row, modal);
         });
+    });
 
-        table.appendChild(tbody);
-    } else {
-        // Если данных нет, выводим сообщение
-        var noDataMsg = document.createElement('p');
-        noDataMsg.textContent = 'No data available.';
-        modal.appendChild(noDataMsg);
-    }
+    AddSortingToTableHeaders(table);
 
     // Добавляем таблицу в модальное окно
     modal.appendChild(table);
 
-    // Добавляем модальное окно в body документа
+    // Создаем кнопку закрыть
+    var closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
+
+    modal.appendChild(closeButton);
+
+    // Добавляем модальное окно в тело документа
     document.body.appendChild(modal);
 
-    // Отображаем модальное окно
-    modal.style.display = 'block';
+    // Вызываем функцию для создания оверлея
+    CreateOverlay(modal);
+}
 
-    // Создаем элемент затемнения фона
-    var backdrop = document.createElement('div');
-    backdrop.setAttribute('class', 'modal-backdrop');
+function AddDataToTable(data, tbody, dataOrder) {
+    // Обрабатываем каждый элемент массива data
+    data.forEach(item => {
+        // Если элемент является строкой, пытаемся распарсить его как JSON
+        if (typeof item === 'string') {
+            try {
+                item = JSON.parse(item);
+            } catch (e) {
+                console.error('Item is not valid JSON:', e);
+                // Пропускаем текущий элемент, если он не может быть распарсен
+                return;
+            }
+        }
 
-    // Добавляем затемнение фона в body документа
-    document.body.appendChild(backdrop);
-
-    // Отображаем затемнение фона
-    backdrop.style.display = 'block';
-
-    // Добавляем обработчик клика на затемнение фона для закрытия модального окна
-    backdrop.addEventListener('click', function() {
-        modal.style.display = 'none';
-        backdrop.style.display = 'none';
-        document.body.removeChild(modal);
-        document.body.removeChild(backdrop);
+        // Создаем строку таблицы и добавляем в нее данные
+        const row = document.createElement('tr');
+        dataOrder.forEach(column => {
+            const td = document.createElement('td');
+            td.textContent = item[column] || '';
+            row.appendChild(td);
+        });
+        tbody.appendChild(row);
     });
 }
 
-function DataSourceModalRowClick(element, row) {
+function DataSourceModalRowClick(element, row, modal) {
     // Получаем значение атрибута data-name для input элемента
     var dataName = element.getAttribute('name');
 
-    // Находим ячейку в строке с соответствующим data-field-name
-    var selectedCell = row.querySelector(`td[data-field-name="${dataName}"]`);
+    // Находим все заголовки в таблице
+    var headers = row.closest('table').querySelectorAll('th');
 
-    // Проверяем, что ячейка найдена
-    if (selectedCell) {
+    // Определяем индекс заголовка, который соответствует dataName
+    var columnIndex = Array.from(headers).findIndex(header => header.textContent.trim() === dataName);
+
+    // Проверяем, что индекс найден
+    if (columnIndex !== -1) {
+        // Находим ячейку в строке по индексу заголовка
+        var selectedCell = row.cells[columnIndex];
+
         // Вставляем текст из ячейки в input элемент
         element.value = selectedCell.textContent;
 
-        // Закрываем модальное окно и затемнение фона
-        var modal = document.querySelector('.modal');
-        var backdrop = document.querySelector('.modal-backdrop');
-        if (modal && backdrop) {
-            modal.style.display = 'none';
-            backdrop.style.display = 'none';
-            document.body.removeChild(modal);
-            document.body.removeChild(backdrop);
-        }
+        // Ручной вызов события change после программного изменения значения
+        const event = new Event('change');
+        element.dispatchEvent(event);
+
+        // Вызываем функцию CloseModal с переданным элементом modal
+        CloseModal(modal);
     } else {
         // Если ячейка не найдена, выводим сообщение об ошибке
-        console.error('No matching data-field-name found in the row');
+        console.error('No matching header found for data-name');
     }
 }
 
+function CreateOverlay(modal) {
+  // Поиск элемента overlay по id
+  let overlay = document.getElementById('overlay');
 
-/////////////////////// СОЗДАнИЕ НАКЛАДНОЙ
+  // Если элемент overlay не найден, создаем его
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'overlay';
+    document.body.appendChild(overlay);
+  }
+
+  // Получаем фактически примененные стили к элементу overlay
+  let overlayStyle = window.getComputedStyle(overlay);
+
+  // Если display у overlay установлен в 'none', меняем на 'block'
+  if (overlayStyle.display === 'none') {
+    overlay.style.display = 'block';
+  }
+
+  var modalZIndex = window.getComputedStyle(modal).zIndex;
+
+  // Преобразование modalZIndex в число и вычитание 1
+  overlay.style.zIndex = parseInt(modalZIndex) - 1;
+}
+
+function CloseModal(modal) {
+  // Удаление модального окна из документа
+  modal.parentNode.removeChild(modal);
+
+  // Поиск всех элементов с классом .modal в документе
+  var modals = document.querySelectorAll('.modal');
+
+  // Переменная для хранения максимального z-index среди модальных окон
+  var highestZIndex = 0;
+
+  // Перебор всех найденных модальных окон
+  for (var i = 0; i < modals.length; i++) {
+    // Получение текущего z-index модального окна
+    var zIndex = parseInt(window.getComputedStyle(modals[i]).zIndex, 10);
+
+    // Если z-index модального окна больше найденного максимального
+    if (zIndex > highestZIndex) {
+      highestZIndex = zIndex;
+    }
+  }
+
+  // Поиск элемента overlay по id
+  var overlay = document.getElementById('overlay');
+
+  // Если найден элемент overlay и есть другие модальные окна
+  if (overlay && modals.length > 0) {
+    // Установка z-index для overlay на 1 меньше максимального среди модальных окон
+    overlay.style.zIndex = highestZIndex - 1;
+  } else if (overlay) {
+    // Если других модальных окон нет, скрываем overlay
+    overlay.style.display = 'none';
+  }
+}
+
+/////////////////////// СОЗДАНИЕ НАКЛАДНОЙ
 
 function ModalCreateInvoice() {
-    // Создаем основные элементы модального окна
-    const overlay = document.createElement('div');
-    overlay.id = 'modalOverlay';
-    document.body.appendChild(overlay);
 
+    // Создаем окно
     const modal = document.createElement('div');
     modal.id = 'modalInvoice';
+    modal.setAttribute('class', 'modal');
     document.body.appendChild(modal);
+
+    // Создаем оверлей
+    CreateOverlay(modal);
 
     // Создаем и добавляем поля ввода для сотрудника
     const employeeInput = document.createElement('input');
@@ -649,42 +712,43 @@ function ModalCreateInvoice() {
 
     // Создаем контейнер для кнопок
     const buttonsContainer = document.createElement('div');
-    buttonsContainer.id = 'buttonsContainer';
+    buttonsContainer.setAttribute('class', 'container_buttons');
+
+    // Создаем кнопку закрыть
+    var closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
 
     // Создаем кнопку отправки
     const submitButton = document.createElement('button');
     submitButton.textContent = 'Отправить';
-    submitButton.className = 'submitButton';
+    submitButton.className = 'greenButton';
     submitButton.disabled = true;
     submitButton.addEventListener('click', function() {
         const invoiceType = actSelect.value;
         ModalCreateAct(invoiceType);
     });
-    buttonsContainer.appendChild(submitButton);
 
-    // Создаем кнопку закрытия
-    const closeButton = document.createElement('button');
-    closeButton.textContent = 'Закрыть';
-    closeButton.addEventListener('click', function() {
-        document.body.removeChild(modal);
-        document.body.removeChild(overlay);
-    });
     buttonsContainer.appendChild(closeButton);
+    buttonsContainer.appendChild(submitButton);
 
     // Добавляем контейнер с кнопками в модальное окно
     modal.appendChild(buttonsContainer);
 
     // Обработчики событий для проверки заполнения полей
-    dateInput.addEventListener('input', () => checkInputs(modal));
-    employeeInput.addEventListener('input', () => checkInputs(modal));
+    dateInput.addEventListener('change', () => CheckInputs(modal));
+    employeeInput.addEventListener('change', () => CheckInputs(modal));
 }
 
-function checkInputs(modal) {
+function CheckInputs(modal) {
     const inputs = modal.querySelectorAll('input');
     const allFilled = Array.from(inputs).every(input => input.value);
 
     // Находим кнопку "Отправить" по классу
-    const submitButton = modal.querySelector('.submitButton');
+    const submitButton = modal.querySelector('.greenButton');
 
     // Включаем или отключаем кнопку в зависимости от заполненности полей
     if (allFilled) {
@@ -696,39 +760,28 @@ function checkInputs(modal) {
 
 function ModalCreateAct(invoiceType) {
 
-  // Поднимаем оверлей
-  var overlay = document.getElementById('modalOverlay');
-  overlay.style.zIndex = '101';
-
-  // Создаем основу модального окна
+  // Создаем окно
   const modal = document.createElement('div');
   let representativeInput = '';
   let authorizingEmployeeInput = '';
   let receivingEmployeeInput = '';
-  modal.className = 'modalAct';
-
-  // Поле даты
-  const dateInput = document.createElement('input');
-  dateInput.type = 'date';
-  dateInput.placeholder = 'Укажите дату акта';
+  modal.className = 'modal';
+  modal.id = 'modalAct';
 
   // Заголовок модального окна
   let titleText = '';
   switch (invoiceType) {
     case "1":
       titleText = 'Акт поступления';
-      modal.id = 'Акт_поступления';
-      dateInput.id = 'Дата_поступления';
+      modal.name = 'Акт_поступления';
       break;
     case "2":
       titleText = 'Акт перемещения';
-      modal.id = 'Акт_перемещения';
-      dateInput.id = 'Дата_перемещения';
+      modal.name= 'Акт_перемещения';
       break;
     case "3":
       titleText = 'Акт отправки';
-      modal.id = 'Акт_отправки';
-      dateInput.id = 'Дата_отправки';
+      modal.name = 'Акт_отправки';
       break;
     default:
       titleText = 'Неизвестный тип акта';
@@ -738,15 +791,15 @@ function ModalCreateAct(invoiceType) {
   title.textContent = titleText;
   modal.appendChild(title);
 
-  modal.appendChild(dateInput);
-
   // Поля в зависимости от типа акта
   if (invoiceType === "1" || invoiceType === "3") {
-    representativeInput = document.createElement('input');
+    const representativeLabel = document.createElement('label');
+    representativeLabel.textContent = 'Представитель:';
+    representativeLabel.setAttribute('for', 'Номер_представителя');
 
+    representativeInput = document.createElement('input');
     representativeInput.type = 'text';
     representativeInput.id = 'Номер_представителя';
-    representativeInput.placeholder = 'Укажите представителя';
     representativeInput.setAttribute('name', 'Номер_представителя');
     representativeInput.setAttribute('data-source', 'Представитель');
     representativeInput.setAttribute('autocomplete', 'off');
@@ -754,14 +807,18 @@ function ModalCreateAct(invoiceType) {
     representativeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
+
+    modal.appendChild(representativeLabel);
     modal.appendChild(representativeInput);
 
   } else if (invoiceType === "2") {
+    const authorizingEmployeeLabel = document.createElement('label');
+    authorizingEmployeeLabel.textContent = 'Санкционирующий сотрудник:';
+    authorizingEmployeeLabel.setAttribute('for', 'Санкционирующий');
+
     authorizingEmployeeInput = document.createElement('input');
-    authorizingEmployeeInput.placeholder = 'Укажите санкционирующего сотрудника';
     authorizingEmployeeInput.type = 'text';
     authorizingEmployeeInput.id = 'Санкционирующий';
-    authorizingEmployeeInput.placeholder = 'Укажите санкионирующего сотрудника';
     authorizingEmployeeInput.setAttribute('name', 'Номер_сотрудника');
     authorizingEmployeeInput.setAttribute('data-source', 'Сотрудник');
     authorizingEmployeeInput.setAttribute('autocomplete', 'off');
@@ -769,14 +826,14 @@ function ModalCreateAct(invoiceType) {
     authorizingEmployeeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
-    modal.appendChild(authorizingEmployeeInput);
 
-    const receivingEmployeeInput = document.createElement('input');
-    receivingEmployeeInput.placeholder = 'Укажите принимающего сотрудника';
-    receivingEmployeeInput.placeholder = 'Укажите санкционирующего сотрудника';
+    const receivingEmployeeLabel = document.createElement('label');
+    receivingEmployeeLabel.textContent = 'Принимающий сотрудник:';
+    receivingEmployeeLabel.setAttribute('for', 'Завершающий');
+
+    receivingEmployeeInput = document.createElement('input');
     receivingEmployeeInput.type = 'text';
     receivingEmployeeInput.id = 'Завершающий';
-    receivingEmployeeInput.placeholder = 'Укажите завершающего сотрудника';
     receivingEmployeeInput.setAttribute('name', 'Номер_сотрудника');
     receivingEmployeeInput.setAttribute('data-source', 'Сотрудник');
     receivingEmployeeInput.setAttribute('autocomplete', 'off');
@@ -784,50 +841,50 @@ function ModalCreateAct(invoiceType) {
     receivingEmployeeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
+
+    modal.appendChild(authorizingEmployeeLabel);
+    modal.appendChild(authorizingEmployeeInput);
+    modal.appendChild(receivingEmployeeLabel);
     modal.appendChild(receivingEmployeeInput);
   }
 
-  dateInput.addEventListener('change', () => checkInputs(modal));
-
   if (authorizingEmployeeInput) {
-    authorizingEmployeeInput.addEventListener('input', () => checkInputs(modal));
+    authorizingEmployeeInput.addEventListener('change', () => CheckInputs(modal));
   }
   if (receivingEmployeeInput) {
-    receivingEmployeeInput.addEventListener('input', () => checkInputs(modal));
+    receivingEmployeeInput.addEventListener('change', () => CheckInputs(modal));
   }
   if (representativeInput) {
-    representativeInput.addEventListener('input', () => checkInputs(modal));
+    representativeInput.addEventListener('change', () => CheckInputs(modal));
   }
 
   // Контейнер для кнопок
   const buttonsContainer = document.createElement('div');
-  buttonsContainer.className = 'buttons-container';
+  buttonsContainer.className = 'container_buttons';
 
   // Кнопка "Отправить"
   const sendButton = document.createElement('button');
   sendButton.textContent = 'Отправить';
-  sendButton.className = 'submitButton';
+  sendButton.className = 'greenButton';
   sendButton.disabled = true;
   sendButton.addEventListener('click', () => {
     CreateActClick(modal);
-    document.querySelector('.modalAct')?.remove();
-    document.getElementById('modalInvoice')?.remove();
-    document.getElementById('modalOverlay')?.remove();
+    CloseModal(modal);
   });
-  buttonsContainer.appendChild(sendButton);
 
-  // Кнопка "Закрыть"
-  const closeButton = document.createElement('button');
+  // Создаем кнопку закрыть
+  var closeButton = document.createElement('button');
+  closeButton.setAttribute('class', 'redButton');
   closeButton.textContent = 'Закрыть';
-  closeButton.addEventListener('click', () => {
-    document.querySelector('.modalAct')?.remove();
+  closeButton.addEventListener('click', function() {
+      CloseModal(modal);
   });
-  buttonsContainer.appendChild(closeButton);
 
   modal.appendChild(buttonsContainer);
-
-  // Добавляем модальное окно в DOM (пример)
+  buttonsContainer.appendChild(closeButton);
+  buttonsContainer.appendChild(sendButton);
   document.body.appendChild(modal);
+  CreateOverlay(modal);
 }
 
 function CreateActClick(modal) {
@@ -872,7 +929,7 @@ function CreateActClick(modal) {
             dataForModal["Номер_накладной"] = invoiceNumber;
 
             // Получаем id модального окна
-            const modalId = modal.id;
+            const modalId = modal.name;
 
             // Отправляем fetch запрос
             fetch(`/addData/${modalId}`, {
@@ -899,11 +956,99 @@ function CreateActClick(modal) {
     });
 }
 
+/////////////////////// СОЗДАНИЕ УЕ
 
+function ModalCreateUE() {
 
-    // СОЗДАНИЕ УЕ
+    // Создаем окно
+    const modal = document.createElement('div');
+    modal.id = 'modalInvoice';
+    modal.setAttribute('class', 'modal');
+    document.body.appendChild(modal);
 
-function TableCreateUE(row) {
-    console.log('Строка таблицы была кликнута:', row);
+    // Создаем оверлей
+    CreateOverlay(modal);
+
+    // Создаем и добавляем поля ввода для сотрудника
+    const employeeInput = document.createElement('input');
+    employeeInput.type = 'number';
+    employeeInput.id = 'Номер_сотрудника';
+    employeeInput.placeholder = 'Подписавший сотрудник';
+    employeeInput.setAttribute('name', 'Номер_сотрудника');
+    employeeInput.setAttribute('data-source', 'Сотрудник');
+    employeeInput.setAttribute('autocomplete', 'off');
+    employeeInput.setAttribute('readonly', true);
+    employeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+    employeeInput.onfocus = function() {
+        DataSourceRowClick(this);
+    };
+    modal.appendChild(employeeInput);
+
+    const employeeLabel = document.createElement('label');
+    employeeLabel.textContent = 'Подписавший сотрудник: ';
+    employeeLabel.htmlFor = 'Номер_сотрудника';
+    modal.insertBefore(employeeLabel, employeeInput);
+
+    // Создаем и добавляем поля ввода для даты
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.id = 'Дата_подписания';
+    dateInput.placeholder = 'Дата создания накладной';
+    modal.appendChild(dateInput);
+
+    const dateLabel = document.createElement('label');
+    dateLabel.textContent = 'Дата создания накладной: ';
+    dateLabel.htmlFor = 'Дата_подписания';
+    modal.insertBefore(dateLabel, dateInput);
+
+    // Создаем и добавляем select поле и его label
+    const actSelectLabel = document.createElement('label');
+    actSelectLabel.textContent = 'Укажите тип накладной: ';
+    actSelectLabel.htmlFor = 'actType';
+    modal.appendChild(actSelectLabel);
+
+    const actSelect = document.createElement('select');
+    actSelect.id = 'actType';
+    const actTypes = ['Акт поступления', 'Акт перемещения', 'Акт отправки'];
+    actTypes.forEach((type, index) => {
+        const option = document.createElement('option');
+        option.value = index + 1;
+        option.textContent = type;
+        actSelect.appendChild(option);
+    });
+    modal.appendChild(actSelect);
+
+    // Создаем контейнер для кнопок
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.setAttribute('class', 'container_buttons');
+
+    // Создаем кнопку закрыть
+    var closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
+
+    // Создаем кнопку отправки
+    const submitButton = document.createElement('button');
+    submitButton.textContent = 'Отправить';
+    submitButton.className = 'greenButton';
+    submitButton.disabled = true;
+    submitButton.addEventListener('click', function() {
+        const invoiceType = actSelect.value;
+        ModalCreateAct(invoiceType);
+    });
+
+    buttonsContainer.appendChild(closeButton);
+    buttonsContainer.appendChild(submitButton);
+
+    // Добавляем контейнер с кнопками в модальное окно
+    modal.appendChild(buttonsContainer);
+
+    // Обработчики событий для проверки заполнения полей
+    dateInput.addEventListener('change', () => CheckInputs(modal));
+    employeeInput.addEventListener('change', () => CheckInputs(modal));
 }
+
 

@@ -4,6 +4,8 @@ body {
     padding: 0;
 }
 
+/* Хедер */
+
 header {
     background-color: #333;
     color: #fff;
@@ -32,93 +34,7 @@ header {
     cursor: pointer;
 }
 
-#container2 {
-    padding: 0;
-    margin-top: 100px;
-    display: flex;
-    flex-direction: column;
-    height: auto;
-}
-
-#container1 {
-    display: flex;
-    flex-direction: row;
-}
-
-#input {
-    width: 370px;
-    padding: 10px;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 10px;
-}
-
-#input button {
-    margin-right: 10px;
-}
-
-#input button:last-child {
-    margin-right: 0;
-}
-
-
-#table  {
-    margin-top: 10px;
-}
-
-#table{
-    border-collapse: collapse;
-    border: 1px solid black;
-}
-
-#table th, #table td {
-    border: 1px solid black;
-    padding: 8px;
-}
-
-#table tbody tr:hover {
-    background-color: #e0e0e0;
-    cursor: pointer;
-}
-
-#table thead tr th:hover {
-    background-color: #b3d1ff;
-    cursor: pointer;
-}
-
-.table  {
-    margin-top: 10px;
-}
-
-.table{
-    border-collapse: collapse;
-    border: 1px solid black;
-}
-
-.table th, .table td {
-    border: 1px solid black;
-    padding: 8px;
-}
-
-.table tbody tr:hover {
-    background-color: #e0e0e0;
-    cursor: pointer;
-}
-
-.table thead tr th:hover {
-    background-color: #b3d1ff;
-    cursor: pointer;
-}
-
-@keyframes fadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Бургер */
 
 #submenu {
     display: none;
@@ -160,10 +76,110 @@ header {
     cursor: pointer;
 }
 
+/* Основные модули */
 
-/* Общие стили для всех форм */
+.container_main {
+    display: flex;
+    flex-direction: row;
+}
+
+.container_buttons {
+    width: 370px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.container_buttons button {
+    margin-right: 10px;
+}
+
+.container_table_navigationPanel {
+    display: flex;
+    flex-direction: column;
+}
+
+.table  {
+    margin-top: 10px;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+
+.table th, .table td {
+    border: 1px solid black;
+    padding: 8px;
+}
+
+.table tbody tr:hover {
+    background-color: #e0e0e0;
+    cursor: pointer;
+}
+
+.table thead tr th:hover {
+    background-color: #b3d1ff;
+    cursor: pointer;
+}
+
+.container_formsMenu {
+    width: 390px;
+}
+
+.formsMenu {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+}
+
+/* Кнопки, лэйблы, импуты */
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    margin-top: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button[disabled] {
+    background-color: #cccccc;
+    color: #666666;
+    cursor: default;
+}
+
+button[disabled]:hover {
+    opacity: 1;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.grayButton  {
+    background-color: #C0C0C0;
+}
+
+.greenButton {
+    background-color: #98FB98;
+}
+
+.redButton {
+    background-color: #FA8072;
+}
+
+/* Формы удаления/изменения/создания */
+
 #forms {
-    display: none;
     width: 300px;
     background-color: #f0f0f0;
     margin: 0 auto;
@@ -173,98 +189,16 @@ header {
     border: 1px solid black;
 }
 
-label {
-    display: block;
-    margin-bottom: 5px;
-}
+/* Общее модальное окно */
 
-input[type="text"] {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-input[type="date"]  {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-button[type="submit"],
-button[type="button"] {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-button[type="submit"]:hover,
-button[type="button"]:hover {
-    background-color: #45a049;
-}
-
-/* Стили для формы изменения */
-#editForm {
+#overlay {
     display: none;
-}
-
-#editForm label {
-    font-weight: bold;
-}
-
-#editForm button[type="submit"] {
-    background-color: #f44336;
-}
-
-/* Стили для формы создания */
-#createForm {
-    display: none;
-}
-
-#createForm label {
-    font-weight: bold;
-}
-
-#createForm button[type="submit"] {
-    background-color: #f44336;
-}
-
-/* Стили для формы удаления */
-#deleteForm {
-    display: none;
-}
-
-#deleteForm label {
-    font-weight: bold;
-}
-
-#deleteForm button[type="submit"] {
-    background-color: #f44336;
-}
-
-
-#navigationPanel {
-    margin-top: 10px;
-}
-
-/* Стили для модального окна */
-.modal-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
 }
 
 .modal {
@@ -277,35 +211,33 @@ button[type="button"]:hover {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    z-index: 9999;
 }
 
-/* Стили для таблицы внутри модального окна */
-.modal .table {
-    width: 100%;
-    border-collapse: collapse;
+#modalDataSource  {
+    max-width: 800px;
+    max-height: 800px;
+    width: auto;
+    height: auto;
 }
 
-.modal .table th,
-.modal .table td {
-    border: 2px solid #a0a0a0;
-    padding: 8px;
-    text-align: left;
+#modalDataSource .table {
+    max-width: 600px;
+    max-height: 600px;
+    overflow: auto;
 }
 
-.modal .table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
+#modalDataSource .redButton {
+    margin-left: 333px;
+    margin-top: 25px;
 }
 
-/* Стили для строк таблицы при наведении */
-.modal .table tr:hover {
-    background-color: #e0e0e0;
-    cursor: pointer;
-}
+
+/* Панель навигации */
 
 #navigationPanel {
     margin-bottom: 20px;
+    margin-top: 10px;
 }
 
 #navigationPanel button {
@@ -313,35 +245,10 @@ button[type="button"]:hover {
 }
 
 #navigationPanel button.active {
-    background-color: blue;
+    background-color: #A9A9A9;
 }
-
 
 /* СТИЛИ ДЛЯ СТРАНИЦЫ СОЗДАНИЯ НАКЛАДНОЙ */
-#container3 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin-top: 20px;
-    width: 100%;
-}
-
-#container4 {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-}
-
-#modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 99;
-}
 
 #modalInvoice {
   position: fixed;
@@ -350,102 +257,37 @@ button[type="button"]:hover {
   transform: translate(-50%, -50%);
   background-color: #fff;
   padding: 40px;
-  z-index: 100;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 300px; /* Установлено фиксированное значение ширины */
-  font-size: 18px; /* Увеличен шрифт */
-  display: flex; /* Используем flexbox для управления расположением элементов */
-  flex-direction: column; /* Элементы располагаются в колонку */
-  gap: 20px; /* Добавляем промежуток между элементами */
-}
-
-#modalInvoice label,
-#modalInvoice input,
-#modalInvoice select,
-#modalInvoice button {
-  width: 100%; /* Элементы занимают всю ширину контейнера */
-  margin-bottom: 10px; /* Добавляем небольшой отступ снизу для каждого элемента */
-}
-
-#buttonsContainer {
-  display: flex;
-  justify-content: space-between;
-  gap: 30px;
-}
-
-#modalInvoice button {
-  padding: 10px 15px;
-  font-size: 16px;
-  min-width: 100px;
-  height: 50px;
-}
-
-.modalAct {
-  position: fixed;
-  left: 60%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fff;
-  padding: 40px;
-  z-index: 102;
   border-radius: 5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   width: 300px;
   font-size: 18px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
+  z-index: 100;
 }
 
-.modalAct h2,
-.modalAct input,
-.modalAct button {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.modalAct .buttons-container {
+#modalAct {
+  position: fixed;
+  left: 60%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 300px;
+  font-size: 18px;
   display: flex;
-  justify-content: space-between;
-}
-
-.modalAct .submitButton {
-  background-color: #4CAF50; /* Зеленый */
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.modalAct .submitButton:disabled {
-  background-color: #ccc;
-  cursor: default;
-}
-
-.modalAct button {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
-
-.modalAct button:hover {
-  opacity: 0.8;
+  flex-direction: column;
+  gap: 15px;
+  z-index: 200;
 }
 
 /* Меню создания УЕ */
-
-.sticky {
-    position: fixed;
-    top: 0;
-    z-index: 1000; /* Обеспечивает, что элемент будет на переднем плане */
-}
-
 #UECreationMenu {
-    margin-left: 30px;
-    margin-top: 45px;
+    margin-left: 905px;
+    margin-top: 10px;
     width: 650px;
     height: 500px;
     display: flex;
@@ -454,6 +296,7 @@ button[type="button"]:hover {
     border: 1px solid black;
     border-radius: 5px;
     padding: 8px;
+    position: fixed;
 }
 
 #UEContainer1 {
