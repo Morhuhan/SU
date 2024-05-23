@@ -69,6 +69,7 @@ function GetPageFromTable(pageNumber) {
         });
 
         SortTable(mainTable, 0);
+        AttachInvoiceRowClick();
     })
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
@@ -868,7 +869,7 @@ function ModalCreateAct(invoiceType) {
   sendButton.className = 'greenButton';
   sendButton.disabled = true;
   sendButton.addEventListener('click', () => {
-    CreateActClick(modal);
+    SubmitActClick(modal);
     CloseModal(modal);
   });
 
@@ -887,7 +888,7 @@ function ModalCreateAct(invoiceType) {
   CreateOverlay(modal);
 }
 
-function CreateActClick(modal) {
+function SubmitActClick(modal) {
 
     // Шаг 1: Получаем значения по id и отправляем fetch запрос
     const invoiceDateValue = document.getElementById('Дата_подписания').value;
@@ -958,72 +959,127 @@ function CreateActClick(modal) {
 
 /////////////////////// СОЗДАНИЕ УЕ
 
-function ModalCreateUE() {
+function AttachInvoiceRowClick() {
+    var tables = document.getElementsByName('Накладная');
 
+    if (tables.length > 0) {
+        for (var t = 0; t < tables.length; t++) {
+            var rows = tables[t].getElementsByTagName('tr');
+
+            for (var i = 1; i < rows.length; i++) {
+                rows[i].onclick = function() {
+                    InvoiceRowClick(this);
+                };
+            }
+        }
+    } else {
+        console.log('Таблицы с name "накладная" не найдены.');
+    }
+}
+
+function InvoiceRowClick(row) {
+  // Находим элемент с id UEMenu_number
+  var ueMenuNumber = document.getElementById('UEMenu_number');
+
+  // Проверяем, что строка row и элемент UEMenu_number существуют
+  if (!row || !ueMenuNumber) {
+    console.error('Не удалось найти элемент row или UEMenu_number');
+    return;
+  }
+
+  // Извлекаем значение из первой ячейки строки
+  var firstCellText = row.cells[0].textContent;
+
+  // Помещаем значение в элемент с id UEMenu_number
+  ueMenuNumber.textContent = firstCellText;
+
+  // Находим элемент с id UEMenu_table
+  var ueMenuTable = document.getElementById('UEMenu_table');
+
+  // Проверяем, что элемент UEMenu_table существует
+  if (!ueMenuTable) {
+    console.error('Не удалось найти элемент UEMenu_table');
+    return;
+  }
+
+  // Получаем атрибут name из UEMenu_table
+  var tableName = ueMenuTable.getAttribute('name');
+
+  // Находим элемент select с id itemsPerPage
+  var itemsPerPageSelect = document.getElementById('itemsPerPage');
+
+  // Получаем значение выбранного количества строк на странице
+  var itemsPerPage = itemsPerPageSelect.value;
+
+  // Формируем JSON объект
+  var jsonData = {
+    tablename: tableName,
+    pagenumber: 1,
+    itemsperpage: itemsPerPage
+  };
+
+  // Отправляем запрос на сервер
+  fetch(`/getPage/${firstCellText}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Извлекаем порядок столбцов из заголовков таблицы
+    var headers = ueMenuTable.querySelectorAll('thead th');
+    var order = Array.from(headers).map(th => th.getAttribute('name'));
+
+    // Очищаем текущие строки таблицы
+    while (ueMenuTable.rows.length > 1) {
+      ueMenuTable.deleteRow(1);
+    }
+
+    // Добавляем новые строки в таблицу
+    data.forEach(rowDataStr => {
+      var rowData = JSON.parse(rowDataStr);  // Преобразуем строку JSON в объект
+      var newRow = ueMenuTable.insertRow();
+
+      order.forEach(columnName => {
+        var newCell = newRow.insertCell();
+        newCell.textContent = rowData[columnName] || '';
+      });
+    });
+  })
+  .catch(error => {
+    console.error('Ошибка при получении данных с сервера:', error);
+  });
+}
+
+function ModalCreateUE() {
     // Создаем окно
     const modal = document.createElement('div');
     modal.id = 'modalInvoice';
     modal.setAttribute('class', 'modal');
     document.body.appendChild(modal);
 
-    // Создаем оверлей
     CreateOverlay(modal);
 
-    // Создаем и добавляем поля ввода для сотрудника
-    const employeeInput = document.createElement('input');
-    employeeInput.type = 'number';
-    employeeInput.id = 'Номер_сотрудника';
-    employeeInput.placeholder = 'Подписавший сотрудник';
-    employeeInput.setAttribute('name', 'Номер_сотрудника');
-    employeeInput.setAttribute('data-source', 'Сотрудник');
-    employeeInput.setAttribute('autocomplete', 'off');
-    employeeInput.setAttribute('readonly', true);
-    employeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
-    employeeInput.onfocus = function() {
-        DataSourceRowClick(this);
-    };
-    modal.appendChild(employeeInput);
+    // Создаем и добавляем поля ввода для серийного номера
+    const serialNumberInput = document.createElement('input');
+    serialNumberInput.type = 'text';
+    serialNumberInput.id = 'Серийный_номер';
+    serialNumberInput.setAttribute('name', 'Серийный_номер');
+    modal.appendChild(serialNumberInput);
 
-    const employeeLabel = document.createElement('label');
-    employeeLabel.textContent = 'Подписавший сотрудник: ';
-    employeeLabel.htmlFor = 'Номер_сотрудника';
-    modal.insertBefore(employeeLabel, employeeInput);
-
-    // Создаем и добавляем поля ввода для даты
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.id = 'Дата_подписания';
-    dateInput.placeholder = 'Дата создания накладной';
-    modal.appendChild(dateInput);
-
-    const dateLabel = document.createElement('label');
-    dateLabel.textContent = 'Дата создания накладной: ';
-    dateLabel.htmlFor = 'Дата_подписания';
-    modal.insertBefore(dateLabel, dateInput);
-
-    // Создаем и добавляем select поле и его label
-    const actSelectLabel = document.createElement('label');
-    actSelectLabel.textContent = 'Укажите тип накладной: ';
-    actSelectLabel.htmlFor = 'actType';
-    modal.appendChild(actSelectLabel);
-
-    const actSelect = document.createElement('select');
-    actSelect.id = 'actType';
-    const actTypes = ['Акт поступления', 'Акт перемещения', 'Акт отправки'];
-    actTypes.forEach((type, index) => {
-        const option = document.createElement('option');
-        option.value = index + 1;
-        option.textContent = type;
-        actSelect.appendChild(option);
-    });
-    modal.appendChild(actSelect);
+    const serialNumberLabel = document.createElement('label');
+    serialNumberLabel.textContent = 'Серийный номер: ';
+    serialNumberLabel.htmlFor = 'Серийный_номер';
+    modal.insertBefore(serialNumberLabel, serialNumberInput);
 
     // Создаем контейнер для кнопок
     const buttonsContainer = document.createElement('div');
     buttonsContainer.setAttribute('class', 'container_buttons');
 
     // Создаем кнопку закрыть
-    var closeButton = document.createElement('button');
+    const closeButton = document.createElement('button');
     closeButton.setAttribute('class', 'redButton');
     closeButton.textContent = 'Закрыть';
     closeButton.addEventListener('click', function() {
@@ -1034,21 +1090,89 @@ function ModalCreateUE() {
     const submitButton = document.createElement('button');
     submitButton.textContent = 'Отправить';
     submitButton.className = 'greenButton';
-    submitButton.disabled = true;
     submitButton.addEventListener('click', function() {
-        const invoiceType = actSelect.value;
-        ModalCreateAct(invoiceType);
+        SubmitUEClick(modal);
     });
 
+    // Добавляем кнопки в контейнер
     buttonsContainer.appendChild(closeButton);
     buttonsContainer.appendChild(submitButton);
 
     // Добавляем контейнер с кнопками в модальное окно
     modal.appendChild(buttonsContainer);
-
-    // Обработчики событий для проверки заполнения полей
-    dateInput.addEventListener('change', () => CheckInputs(modal));
-    employeeInput.addEventListener('change', () => CheckInputs(modal));
 }
+
+function SubmitUEClick(modal) {
+  let data = {};
+
+  const inputs = modal.querySelectorAll('input');
+  inputs.forEach(input => {
+    data[input.id] = input.value;
+  });
+
+  const jsonData = JSON.stringify(data);
+
+  fetch('/addData/Учетная_единица', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonData,
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Success:', data);
+
+    const SerialNumberValue = modal.querySelector('#Серийный_номер').value;
+
+    const newData = {
+      Номер_накладной: document.getElementById('UEMenu_number').textContent,
+      Серийный_номер: SerialNumberValue
+    };
+
+    const newJsonData = JSON.stringify(newData);
+
+    return fetch('/addData/УЕ_Накладная', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: newJsonData,
+    });
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Success:', data);
+
+    // Close the modal using the CloseModal function
+    CloseModal(modal);
+
+    // Retrieve UEMenuNumberValue again
+    const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
+
+    // Find the table row with the matching UEMenuNumberValue
+    const table = document.getElementById('mainTable');
+    const rows = table.querySelectorAll('tr');
+    let targetRow = null;
+
+    rows.forEach(row => {
+      const firstCell = row.cells[0];
+      if (firstCell && firstCell.textContent === UEMenuNumberValue) {
+        targetRow = row;
+      }
+    });
+
+    // Call the InvoiceRowClick function with the found row
+    if (targetRow) {
+      InvoiceRowClick(targetRow);
+    }
+  })
+  .catch((error) => {
+    console.error('Error:', error);
+  });
+}
+
+
+
 
 

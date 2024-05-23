@@ -20,6 +20,12 @@ public class DAO {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public List<String> getDataUEFromTable(JsonNode jsonNode, String invoiceNumber) throws DataAccessException {
+        String sql = "SELECT * FROM получить_страницу_УЕ(?::jsonb, ?::integer)";
+        String jsonText = jsonNode.toString();
+        return jdbcTemplate.queryForList(sql, String.class, jsonText, invoiceNumber);
+    }
+
     public List<String> getDataFromTable(JsonNode jsonNode) throws DataAccessException {
         String sql = "SELECT * FROM получить_страницу_из_таблицы(?::jsonb)";
         String jsonText = jsonNode.toString();

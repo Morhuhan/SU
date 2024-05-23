@@ -238,6 +238,7 @@ button:hover {
 #navigationPanel {
     margin-bottom: 20px;
     margin-top: 10px;
+    max-width: 490px;
 }
 
 #navigationPanel button {
@@ -285,7 +286,8 @@ button:hover {
 }
 
 /* Меню создания УЕ */
-#UECreationMenu {
+
+#UEMenu {
     margin-left: 905px;
     margin-top: 10px;
     width: 650px;
@@ -310,28 +312,28 @@ button:hover {
     margin-right: 50px;
 }
 
-#UECreationMenu_header {
+#UEMenu_header {
     font-size: 26px;
     font-weight: bold;
     height: 40px;
     display: flex;
 }
 
-#UECreationMenu_number {
+#UEMenu_number {
     height: 30px;
     width: 80px;
     border: 1px solid black;
     margin-left: 10px;
 }
 
-#UECreationMenu button {
+#UEMenu button {
   padding: 10px 15px;
   font-size: 16px;
   min-width: 100px;
   height: 50px;
 }
 
-#UECreationMenu_table {
+#UEMenu_table_container {
     height: 400px;
     width: auto;
     overflow-x: auto;

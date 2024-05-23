@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <title>Управление Весами</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
     </script>
 
-    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
-    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 </head>
 <body>
 <header>
@@ -20,7 +20,7 @@
     <!-- Выбор количества строк на странице -->
     <div>
         <label for="itemsPerPage">Строк на странице:</label>
-        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(1);">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -94,16 +94,16 @@
         </table>
     </div>
 
-    <div id="UECreationMenu">
-        <div id="UECreationMenu_header">
+    <div id="UEMenu">
+        <div id="UEMenu_header">
             <div> Накладная номер </div>
-            <div id="UECreationMenu_number">
+            <div id="UEMenu_number">
                 <!-- Место для номера накладной -->
             </div>
         </div>
 
-        <div id="UECreationMenu_table" >
-            <table class="table" name="Весы">
+        <div id="UEMenu_table_container" >
+            <table id="UEMenu_table" class="table" name="Учетная_единица">
                 <thead>
                 <tr>
                     <th name="Серийный_номер">Серийный номер</th>
@@ -121,7 +121,7 @@
 
         <div id="UEContainer1">
             <input type="text" id="searchField" placeholder="Введите серийный номер для поиска">
-            <button class="submitButton">Создать</button>
+            <button class="submitButton" onclick="ModalCreateUE()">Создать</button>
         </div>
     </div>
 </div>
