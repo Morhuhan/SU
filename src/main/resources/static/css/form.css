@@ -116,6 +116,10 @@ header {
     padding: 8px;
 }
 
+tr.selected {
+    background-color: #cccccc;
+}
+
 .table tbody tr:hover {
     background-color: #e0e0e0;
     cursor: pointer;

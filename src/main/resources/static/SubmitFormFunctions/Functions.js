@@ -214,92 +214,141 @@ function SubmitCreateForm(event) {
     });
 }
 
-function SubmitEditForm(event) {
-    event.preventDefault();
+function EditButtonClick(table) {
+    // Найти строку с классом selected
+    const selectedRow = table.querySelector('tr.selected');
+    if (!selectedRow) {
+        console.error('No row selected');
+        return;
+    }
 
-    var mainTable = document.getElementById('mainTable');
-    var tableName = mainTable.getAttribute('name');
+    // Получить заголовки таблицы (th)
+    const headers = table.querySelectorAll('th');
+    if (headers.length === 0) {
+        console.error('No headers found');
+        return;
+    }
 
-    var formData = new FormData(document.getElementById('editForm'));
+    // Получить имя таблицы из атрибута name
+    const tableName = table.getAttribute('name');
+    if (!tableName) {
+        console.error('Table name attribute is missing');
+        return;
+    }
 
-    // Преобразование FormData в простой объект
-    var rowData = {};
-    formData.forEach(function(value, key){
-        rowData[key] = value;
-    });
+    // Создание модального окна
+    const { modal, submitButton, editRow } = CreateModalEdit(headers, selectedRow);
 
-    // Преобразование объекта rowData в строку JSON
-    var jsonString = JSON.stringify(rowData);
+    // Обработка кнопки отправить
+    submitButton.onclick = function() {
+        const jsonData = {};
+        headers.forEach((header, index) => {
+            const key = header.getAttribute('name');
+            if (key) {
+                const cell = editRow.cells[index];
+                if (cell) {
+                    jsonData[key] = cell.textContent;
+                }
+            }
+        });
 
-    var url = '/editData/' + encodeURIComponent(tableName);
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: jsonString
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.error);
-            });
+        // Подтверждение изменений
+        const userConfirmed = confirm("Вы уверены, что хотите изменить выбранную строку?");
+        if (!userConfirmed) {
+            return;
         }
-        else {
-            GetPageFromTable(currentPage); // Предполагается, что эта функция обновляет текущую страницу или таблицу
-        }
-    })
-    .catch(error => {
-        alert(error.message);
-        console.error('There has been a problem with your fetch operation:', error);
-    });
+
+        const url = `/editData/${encodeURIComponent(tableName)}`;
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Data edited successfully');
+                modal.style.display = 'none';
+                document.body.removeChild(modal);
+            } else {
+                return response.json().then(errData => {
+                    throw new Error(errData.error || 'Failed to edit data');
+                });
+            }
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    };
 }
 
-function SubmitDeleteForm(event) {
-    event.preventDefault();
+function CreateModalEdit(headers, selectedRow) {
+    // Создание модального окна
+    const modal = document.createElement('div');
+    modal.classList.add('modal');
+    modal.id = 'editModal';
 
-    var mainTable = document.getElementById('mainTable');
-    var tableName = mainTable.getAttribute('name');
+    const modalContent = document.createElement('div');
+    modalContent.classList.add('modal-content');
 
-    var formData = new FormData(document.getElementById('deleteForm'));
-    var rowData = {}; // Объявляем объект rowData
+    const closeButton = document.createElement('span');
+    closeButton.classList.add('close-button');
+    closeButton.innerHTML = '&times;';
+    modalContent.appendChild(closeButton);
 
-    // Перебираем все элементы input внутри формы
-    document.querySelectorAll('#deleteForm input').forEach(function(input){
-        // Добавляем в объект rowData значения, если input не пустой
-        if(input.value) {
-            rowData[input.name] = input.value;
-        }
+    const editTable = document.createElement('table');
+    editTable.id = 'editTable';
+
+    const editTableHead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    headers.forEach(header => {
+        const th = document.createElement('th');
+        th.textContent = header.textContent;
+        headerRow.appendChild(th);
     });
+    editTableHead.appendChild(headerRow);
+    editTable.appendChild(editTableHead);
 
-    // Преобразование объекта rowData в строку JSON
-    var jsonString = JSON.stringify(rowData);
+    const editTableBody = document.createElement('tbody');
+    const editRow = document.createElement('tr');
 
-    var url = '/deleteData/' + encodeURIComponent(tableName);
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: jsonString
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.error);
-            });
-        }
-        else {
-            GetPageFromTable(currentPage); // Предполагается, что currentPage определен где-то в коде
-            UpdateNavigationPanel(); // Предполагается, что UpdateNavigationPanel определена где-то в коде
-        }
-    })
-    .catch(error => {
-        alert(error.message);
-        console.error('There has been a problem with your fetch operation:', error);
+    // Преобразование HTMLCollection в массив
+    Array.from(selectedRow.cells).forEach(cell => {
+        const td = document.createElement('td');
+        td.textContent = cell.getAttribute('data-value') !== null ? cell.getAttribute('data-value') : cell.textContent;
+        td.contentEditable = true; // Сделать ячейки редактируемыми
+        editRow.appendChild(td);
     });
+    editTableBody.appendChild(editRow);
+    editTable.appendChild(editTableBody);
+
+    modalContent.appendChild(editTable);
+
+    const submitButton = document.createElement('button');
+    submitButton.id = 'submitChanges';
+    submitButton.textContent = 'Отправить';
+    modalContent.appendChild(submitButton);
+
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+
+    // Показать модальное окно
+    modal.style.display = 'block';
+
+    CreateOverlay(modal);
+
+    // Закрытие модального окна
+    closeButton.onclick = CloseModal(modal);
+
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            document.body.removeChild(modal);
+        }
+    }
+
+    return { modal, submitButton, editRow };
 }
 
 function UpdateNavigationPanel() {
@@ -366,42 +415,10 @@ function UpdateNavigationPanel() {
 }
 
 function TableRowClick() {
-    var cells = this.cells; // Получаем ячейки текущей строки
-    var mainTable = document.getElementById('mainTable');
-    var columns = mainTable.getElementsByTagName('th'); // Получаем колонки таблицы
-
-    // Получаем формы для редактирования и удаления
-    var editForm = document.getElementById("editForm");
-    var deleteForm = document.getElementById("deleteForm");
-
-    // Заполняем input элементы в форме редактирования
-    Array.from(editForm.querySelectorAll("input")).forEach(function(input) {
-        var fieldName = input.name;
-        var column = Array.from(columns).find(th => th.getAttribute("name") === fieldName);
-        var cellIndex = Array.from(columns).indexOf(column);
-        if (cellIndex !== -1) {
-            // Проверяем наличие атрибута data-value у ячейки
-            var cellValue = cells[cellIndex].hasAttribute('data-value') ? cells[cellIndex].getAttribute('data-value') : cells[cellIndex].textContent;
-            input.value = cellValue;
-        }
-    });
-
-    // Заполняем input элементы в форме удаления
-    Array.from(deleteForm.querySelectorAll("input")).forEach(function(input) {
-        var fieldName = input.name;
-        var column = Array.from(columns).find(th => th.getAttribute("name") === fieldName);
-        var cellIndex = Array.from(columns).indexOf(column);
-        if (cellIndex !== -1) {
-            // Проверяем наличие атрибута data-value у ячейки
-            var cellValue = cells[cellIndex].hasAttribute('data-value') ? cells[cellIndex].getAttribute('data-value') : cells[cellIndex].textContent;
-            input.value = cellValue;
-        }
-    });
-
     // Убираем выделение со всех строк таблицы
-    var tableRows = document.querySelectorAll('.mainTable tr');
-    tableRows.forEach(function(otherRow) {
-        otherRow.classList.remove("selected");
+    var tableRows = document.querySelectorAll('#mainTable tr');
+    tableRows.forEach(function(row) {
+        row.classList.remove("selected");
     });
 
     // Добавляем класс "selected" к текущей строке, чтобы выделить её
