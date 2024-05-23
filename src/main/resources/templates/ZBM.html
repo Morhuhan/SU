@@ -15,7 +15,7 @@
 </head>
 <body>
 <header>
-    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+    <img id="img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
     <div>
@@ -30,7 +30,7 @@
     </div>
 </header>
 
-<div id="submenu">
+<div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
     <ul>
         <li><a href="/building">Здания</a></li>
         <li><a href="/room">Помещения</a></li>
@@ -39,80 +39,74 @@
     </ul>
 </div>
 
-<div id="container1">
-    <div id="container2">
-        <div id="input">
-            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
-            <button type="button" onclick="ShowEditForm()">Изменить</button>
-            <button type="button" onclick="ShowCreateForm()">Создать</button>
-        </div>
+<div class="container_main">
+    <div class="container_formsMenu">
+        <div class="formsMenu">
+            <div class="container_buttons">
+                <button class="greenButton" type="button" onclick="setupFormToggle('deleteForm')">Удалить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('editForm')">Изменить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('createForm')">Создать</button>
+            </div>
 
-        <div id="forms">
-            <!-- Форма создания для ZBM -->
-            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+            <div id="forms">
+                <!-- Форма создания для ZBM -->
+                <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+                    <h1>Создание ЗБМ</h1>
+                    <label for="create_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="create_zbmNumber"
+                           name="Номер_ЗБМ"
+                           placeholder="Введите номер ЗБМ для создания">
 
-                <h1>Создание ЗБМ</h1>
+                    <label for="create_area">Площадь:</label>
+                    <input type="text"
+                           id="create_area"
+                           name="Площадь">
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-                <input type="text"
-                       id="create_zbmNumber"
-                       name="Номер_ЗБМ"
-                       placeholder="Введите номер ЗБМ для создания">
+                <!-- Форма изменения для ZBM -->
+                <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
+                    <h1>Изменение ЗБМ</h1>
+                    <label for="edit_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="edit_zbmNumber"
+                           data-edit-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           placeholder="Введите номер ЗБМ для изменения">
 
-                <label for="create_area">Площадь:</label>
-                <input type="text"
-                       id="create_area"
-                       name="Площадь">
+                    <label for="edit_area">Площадь:</label>
+                    <input type="text"
+                           id="edit_area"
+                           data-edit-field="Площадь"
+                           name="Площадь">
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-                <button type="submit">Отправить</button>
-            </form>
-
-            <!-- Форма изменения для ZBM -->
-            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                <h1>Изменение ЗБМ</h1>
-
-                <input type="text"
-                       id="edit_zbmNumber"
-                       data-edit-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       placeholder="Введите номер ЗБМ для изменения">
-
-                <label for="edit_area">Площадь:</label>
-                <input type="text"
-                       id="edit_area"
-                       data-edit-field="Площадь"
-                       name="Площадь">
-
-                <button type="submit">Отправить</button>
-            </form>
-
-            <!-- Форма удаления для ZBM -->
-            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                <h1>Удаление ЗБМ</h1>
-
-                <input type="text"
-                       id="delete_zbmNumber"
-                       data-delete-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       placeholder="Введите номер ЗБМ для удаления">
-                <button type="submit">Отправить</button>
-            </form>
-
+                <!-- Форма удаления для ZBM -->
+                <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                    <h1>Удаление ЗБМ</h1>
+                    <label for="delete_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="delete_zbmNumber"
+                           data-delete-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           placeholder="Введите номер ЗБМ для удаления">
+                    <button class="redButton" type="submit">Отправить</button>
+                </form>
+            </div>
         </div>
     </div>
 
-
-
-
     <div>
-
         <!-- Место под панель навигации -->
         <div id="navigationPanel"></div>
 
-        <table id="table" class="mainTable" name="Зона_баланса_материалов">
+        <table id="mainTable" class="table" name="Зона_баланса_материалов">
             <thead>
             <tr>
-                <th name = "Номер_ЗБМ" >Номер ЗБМ</th>
-                <th name = "Площадь">Площадь </th>
+                <th name="Номер_ЗБМ">Номер ЗБМ</th>
+                <th name="Площадь">Площадь</th>
             </tr>
             </thead>
             <tbody>

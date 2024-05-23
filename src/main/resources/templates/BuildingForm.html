@@ -15,12 +15,11 @@
 </head>
 <body>
 <header>
-    <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
+    <img id="img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <a href="/invoice">
-        <img id = "img2" src="css/nakladnaya.png" >
+        <img id="img2" src="css/nakladnaya.png">
     </a>
-
 
     <!-- Выбор количества строк на странице -->
     <div>
@@ -44,84 +43,89 @@
     </ul>
 </div>
 
-<div id="container1">
-    <div id="container2">
-        <div id="input">
-            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
-            <button type="button" onclick="ShowEditForm()">Изменить</button>
-            <button type="button" onclick="ShowCreateForm()">Создать</button>
-        </div>
+<div class="container_main">
+    <div class="container_formsMenu">
+        <div class="formsMenu">
+            <div class="container_buttons">
+                <button class="greenButton" type="button" onclick="setupFormToggle('deleteForm')">Удалить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('editForm')">Изменить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('createForm')">Создать</button>
+            </div>
 
-        <div id="forms">
-            <!-- Форма создания для Building -->
-            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                <h1>Создание Здания</h1>
-                <input type="text"
-                       id="create_zbmNumber"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       data-columns-order="Номер_ЗБМ, Площадь"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ для создания">
+            <div id="forms">
+                <!-- Форма создания для Building -->
+                <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+                    <h1>Создание Здания</h1>
 
-                <input type="text"
-                       id="create_buildingNumber"
-                       name="Номер_здания"
-                       placeholder="Введите номер здания для создания">
+                    <label for="create_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="create_zbmNumber"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           data-columns-order="Номер_ЗБМ, Площадь"
+                           autocomplete="off"
+                           readonly>
 
-                <label for="create_area">Площадь:</label>
-                <input type="text"
-                       id="create_area"
-                       name="Площадь">
-                <button type="submit">Отправить</button>
-            </form>
+                    <label for="create_buildingNumber">Номер здания:</label>
+                    <input type="text"
+                           id="create_buildingNumber"
+                           name="Номер_здания">
 
-            <!-- Форма изменения для Building -->
-            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                <h1>Изменение Здания</h1>
+                    <label for="create_area">Площадь:</label>
+                    <input type="text"
+                           id="create_area"
+                           name="Площадь">
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-                <input type="text"
-                       id="edit_zbmNumber"
-                       data-edit-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       data-columns-order="Номер_ЗБМ, Площадь"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ для создания">
+                <!-- Форма изменения для Building -->
+                <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
+                    <h1>Изменение Здания</h1>
 
-                <input type="text"
-                       id="edit_buildingNumber"
-                       name="Номер_здания">
-                <label for="edit_area">Площадь:</label>
+                    <label for="edit_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="edit_zbmNumber"
+                           data-edit-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           data-columns-order="Номер_ЗБМ, Площадь"
+                           autocomplete="off"
+                           readonly>
 
-                <input type="text"
-                       id="edit_area"
-                       name="Площадь">
-                <button type="submit">Отправить</button>
-            </form>
+                    <label for="edit_buildingNumber">Номер здания:</label>
+                    <input type="text"
+                           id="edit_buildingNumber"
+                           name="Номер_здания">
 
-            <!-- Форма удаления для Building -->
-            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                <h1>Удаление Здания</h1>
+                    <label for="edit_area">Площадь:</label>
+                    <input type="text"
+                           id="edit_area"
+                           name="Площадь">
 
-                <input type="text"
-                       id="delete_zbmNumber"
-                       data-delete-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ для удаления">
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-                <input type="text"
-                       id="delete_buildingNumber"
-                       name="Номер_здания"
-                       placeholder="Введите номер здания для удаления">
+                <!-- Форма удаления для Building -->
+                <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                    <h1>Удаление Здания</h1>
 
-                <button type="submit">Отправить</button>
-            </form>
+                    <label for="delete_zbmNumber">Номер ЗБМ:</label>
+                    <input type="text"
+                           id="delete_zbmNumber"
+                           data-delete-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           autocomplete="off"
+                           readonly>
+
+                    <label for="delete_buildingNumber">Номер здания:</label>
+                    <input type="text"
+                           id="delete_buildingNumber"
+                           name="Номер_здания">
+
+                    <button class="redButton" type="submit">Отправить</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -129,17 +133,15 @@
         <!-- Место под панель навигации -->
         <div id="navigationPanel"></div>
 
-        <table id="table" class="mainTable" name="Здание">
+        <table id="mainTable" class="table" name="Здание">
             <thead>
             <tr>
-
                 <th name="Номер_ЗБМ"
                     data-expanded-source="Зона_баланса_материалов"
                     data-expended-columns="Номер_ЗБМ, Площадь"
                     data-expanded-prefix="Номер: *$ Площадь: *">
                     ЗБМ
                 </th>
-
                 <th name="Номер_здания">Номер здания</th>
                 <th name="Площадь">Площадь</th>
             </tr>

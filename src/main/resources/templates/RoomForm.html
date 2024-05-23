@@ -8,14 +8,8 @@
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
-        var tableName = 'Помещение';
+
         var uniqueKeysArray = ['Номер_ЗБМ', 'Номер_здания'];
-
-        var ModalColumnOrder = [
-            ['Номер_ЗБМ', 'Площадь'],
-            ['Номер_ЗБМ', 'Номер_здания', 'Площадь']
-        ];
-
     </script>
 
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
@@ -23,7 +17,7 @@
 </head>
 <body>
 <header>
-    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+    <img id="img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
 
     <!-- Выбор количества строк на странице -->
     <div>
@@ -47,132 +41,132 @@
     </ul>
 </div>
 
-<div id="container1">
-    <div id="container2">
-        <div id="input">
-            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
-            <button type="button" onclick="ShowEditForm()">Изменить</button>
-            <button type="button" onclick="ShowCreateForm()">Создать</button>
-        </div>
+<div class="container_main">
+    <div class="container_formsMenu">
+        <div class="formsMenu">
+            <div class="container_buttons">
+                <button class="greenButton" type="button" onclick="setupFormToggle('deleteForm')">Удалить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('editForm')">Изменить</button>
+                <button class="greenButton" type="button" onclick="setupFormToggle('createForm')">Создать</button>
+            </div>
 
-        <div id="forms">
-            <!-- Форма создания для Room -->
-            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                <h1>Создание Помещения</h1>
-                <input type="text"
-                       id="create_zbmNumber"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       data-columns-order="Номер_ЗБМ, Площадь"
-                       data-order="0"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ">
+            <div id="forms">
+                <!-- Форма создания для Room -->
+                <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
+                    <h1>Создание Помещения</h1>
+                    <input type="text"
+                           id="create_zbmNumber"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           data-columns-order="Номер_ЗБМ, Площадь"
+                           data-order="0"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер ЗБМ">
 
-                <input type="text"
-                       id="create_buildingNumber"
-                       name="Номер_здания"
-                       data-source="Здание"
-                       data-columns-order="Номер_здания, Площадь"
-                       data-order="1"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер здания">
+                    <input type="text"
+                           id="create_buildingNumber"
+                           name="Номер_здания"
+                           data-source="Здание"
+                           data-columns-order="Номер_здания, Площадь"
+                           data-order="1"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер здания">
 
-                <input type="text"
-                       id="create_responsible"
-                       name="Ответственный"
-                       data-source="Сотрудник"
-                       data-columns-order="Номер_сотрудника, Фамилия, Имя, Отчество"
-                       data-name="Номер_сотрудника"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите ID ответственного">
+                    <input type="text"
+                           id="create_responsible"
+                           name="Номер_сотрудника"
+                           data-source="Сотрудник"
+                           data-columns-order="Номер_сотрудника, Фамилия, Имя, Отчество"
+                           data-name="Номер_сотрудника"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите ID ответственного">
 
-                <input type="text"
-                       id="create_roomNumber"
-                       name="Номер_помещения"
-                       placeholder="Введите номер помещения для создания">
+                    <input type="text"
+                           id="create_roomNumber"
+                           name="Номер_помещения"
+                           placeholder="Введите номер помещения для создания">
 
-                <button type="submit">Отправить</button>
-            </form>
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-            <!-- Форма изменения для Room -->
-            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                <h1>Изменение Помещения</h1>
-                <input type="text"
-                       id="edit_zbmNumber"
-                       data-edit-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       data-name="Номер_ЗБМ"
-                       data-order="0"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ для изменения">
+                <!-- Форма изменения для Room -->
+                <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
+                    <h1>Изменение Помещения</h1>
+                    <input type="text"
+                           id="edit_zbmNumber"
+                           data-edit-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           data-name="Номер_ЗБМ"
+                           data-order="0"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер ЗБМ для изменения">
 
-                <input type="text"
-                       id="edit_buildingNumber"
-                       data-edit-field="Номер_здания"
-                       name="Номер_здания"
-                       data-source="Здание"
-                       data-name="Номер_здания"
-                       data-order="1"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер здания для изменения">
+                    <input type="text"
+                           id="edit_buildingNumber"
+                           data-edit-field="Номер_здания"
+                           name="Номер_здания"
+                           data-source="Здание"
+                           data-name="Номер_здания"
+                           data-order="1"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер здания для изменения">
 
-                <input type="number"
-                       id="edit_responsible"
-                       data-edit-field="Ответственный"
-                       name="Ответственный"
-                       placeholder="Введите ID ответственного">
+                    <input type="number"
+                           id="edit_responsible"
+                           data-edit-field="Ответственный"
+                           name="Ответственный"
+                           placeholder="Введите ID ответственного">
 
-                <input type="text"
-                       id="edit_roomNumber"
-                       data-edit-field="Номер_помещения"
-                       name="Номер_помещения"
-                       placeholder="Введите номер помещения для изменения">
+                    <input type="text"
+                           id="edit_roomNumber"
+                           data-edit-field="Номер_помещения"
+                           name="Номер_помещения"
+                           placeholder="Введите номер помещения для изменения">
 
-                <button type="submit">Отправить</button>
-            </form>
+                    <button class="greenButton" type="submit">Отправить</button>
+                </form>
 
-            <!-- Форма удаления для Room -->
-            <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                <h1>Удаление Помещения</h1>
-                <input type="text"
-                       id="delete_zbmNumber"
-                       data-delete-field="Номер_ЗБМ"
-                       name="Номер_ЗБМ"
-                       data-source="Зона_баланса_материалов"
-                       data-order="0"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер ЗБМ для удаления">
+                <!-- Форма удаления для Room -->
+                <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
+                    <h1>Удаление Помещения</h1>
+                    <input type="text"
+                           id="delete_zbmNumber"
+                           data-delete-field="Номер_ЗБМ"
+                           name="Номер_ЗБМ"
+                           data-source="Зона_баланса_материалов"
+                           data-order="0"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер ЗБМ для удаления">
 
-                <input type="text"
-                       id="delete_buildingNumber"
-                       data-delete-field="Номер_здания"
-                       name="Номер_здания"
-                       data-source="Здание"
-                       data-order="1"
-                       autocomplete="off"
-                       readonly
-                       placeholder="Введите номер здания для удаления">
-                <button type="submit">Отправить</button>
-            </form>
+                    <input type="text"
+                           id="delete_buildingNumber"
+                           data-delete-field="Номер_здания"
+                           name="Номер_здания"
+                           data-source="Здание"
+                           data-order="1"
+                           autocomplete="off"
+                           readonly
+                           placeholder="Введите номер здания для удаления">
+                    <button class="redButton" type="submit">Отправить</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <div>
-
         <!-- Место под панель навигации -->
         <div id="navigationPanel"></div>
 
-        <table id="table" class="mainTable" name="Помещение">
+        <table id="mainTable" class="table" name="Помещение">
             <thead>
             <tr>
-
                 <th name="Номер_ЗБМ"
                     data-expanded-source="Зона_баланса_материалов"
                     data-expended-columns="Номер_ЗБМ, Площадь"
