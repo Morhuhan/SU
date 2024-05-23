@@ -430,31 +430,35 @@ function AttachDataSourceRowClick() {
 
 function DataSourceRowClick(element, form) {
     var sourceTableName = element.getAttribute('data-source');
-    var orderValue = element.getAttribute('data-order');
-    var orders = [];
+    var joinTableName = element.getAttribute('data-join-source');
+    var joinTableColumn = element.getAttribute('data-join-column');
+    var joinTableValueId = element.getAttribute('data-join-value');
 
-    if (orderValue) {
-        var orderElements = form.querySelectorAll('[data-order]');
-
-        orderElements.forEach(function(el) {
-            var elOrderValue = el.getAttribute('data-order');
-            if (elOrderValue < orderValue) {
-                var key = el.getAttribute('name') || el.getAttribute('id');
-                var orderObject = {};
-                orderObject[key] = el.value;
-                orders.push(orderObject);
-            }
-        });
+    var joinTableValue = '';
+    if (joinTableValueId) {
+        var joinTableValueElement = document.getElementById(joinTableValueId);
+        if (joinTableValueElement) {
+            joinTableValue = joinTableValueElement.value;
+        }
     }
 
     var url = '/getAllRecords/' + encodeURIComponent(sourceTableName);
+
+    var paramsToJoin = {};
+    if (joinTableName && joinTableColumn && joinTableValue) {
+        paramsToJoin = {
+            joinTable: joinTableName,
+            joinColumn: joinTableColumn,
+            value: joinTableValue
+        };
+    }
 
     fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(orders)
+        body: JSON.stringify(paramsToJoin)
     })
     .then(response => {
         if (!response.ok) {
@@ -647,6 +651,45 @@ function CloseModal(modal) {
     // Если других модальных окон нет, скрываем overlay
     overlay.style.display = 'none';
   }
+}
+
+function BlockElementInput(element) {
+    // Получаем все дочерние элементы input у element с атрибутом data-input-order
+    const inputs = Array.from(element.querySelectorAll('input[data-input-order]'));
+
+    // Сортируем input элементы по dataInputOrder
+    inputs.sort((a, b) => a.getAttribute('data-input-order') - b.getAttribute('data-input-order'));
+
+    // Переменная для отслеживания, должны ли мы разблокировать следующий input
+    let unlockNext = true;
+
+    // Флаг для проверки заполненности всех input элементов
+    let allFilled = true;
+
+    // Идем по всем input элементам
+    for (let input of inputs) {
+        if (input.value) {
+            // Если input уже заполнен, оставляем его разблокированным
+            input.disabled = false;
+        } else if (unlockNext) {
+            // Если мы должны разблокировать следующий input и он не заполнен
+            input.disabled = false;
+            unlockNext = false;
+            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+        } else {
+            // Если мы не должны разблокировать следующий input
+            input.disabled = true;
+            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+        }
+    }
+
+    // Находим кнопку с классом greenButton
+    const greenButton = element.querySelector('.greenButton');
+
+    if (greenButton) {
+        // Если все input элементы заполнены, активируем кнопку, иначе блокируем
+        greenButton.disabled = !allFilled;
+    }
 }
 
 /////////////////////// СОЗДАНИЕ НАКЛАДНОЙ

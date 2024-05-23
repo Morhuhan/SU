@@ -156,6 +156,12 @@ button {
     font-size: 16px;
 }
 
+input[disabled]{
+   background-color: #cccccc;
+   color: #666666;
+   cursor: default;
+}
+
 button[disabled] {
     background-color: #cccccc;
     color: #666666;

@@ -38,9 +38,10 @@ public class DAO {
         return jdbcTemplate.queryForObject(sql, String.class, tableName, jsonString);
     }
 
-    public List<String> getAllRecordsFromTable(String tableName) throws DataAccessException {
-        String sql = "SELECT * FROM GetAllRecords(?)";
-        return jdbcTemplate.queryForList(sql, String.class, tableName);
+    public List<String> getAllRecordsFromTable(String tableName, JsonNode jsonNode) throws DataAccessException {
+        String jsonString = jsonNode.toString();
+        String sql = "SELECT * FROM получить_записи_join(?, ?::jsonb)";
+        return jdbcTemplate.queryForList(sql, String.class, tableName, jsonString);
     }
 
     public String getExpandedData(JsonNode jsonNode) throws DataAccessException {

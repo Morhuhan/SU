@@ -9,7 +9,18 @@
     <script th:inline="javascript">
         var currentPage = 1;
 
-        var uniqueKeysArray = ['Номер_ЗБМ', 'Номер_здания'];
+        document.addEventListener('DOMContentLoaded', () => {
+            const formsContainer = document.getElementById('forms');
+            const forms = formsContainer.querySelectorAll('form');
+            forms.forEach(form => {
+            const inputs = form.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('change', () => BlockElementInput(form));
+            });
+
+            BlockElementInput(form);
+            });
+        });
     </script>
 
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
@@ -51,29 +62,35 @@
             </div>
 
             <div id="forms">
+
                 <!-- Форма создания для Room -->
                 <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
                     <h1>Создание Помещения</h1>
+
+                    <label for="create_zbmNumber">Номер ЗБМ:</label>
                     <input type="text"
                            id="create_zbmNumber"
                            name="Номер_ЗБМ"
                            data-source="Зона_баланса_материалов"
                            data-columns-order="Номер_ЗБМ, Площадь"
-                           data-order="0"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер ЗБМ">
+                           data-input-order="0">
 
+                    <label for="create_buildingNumber">Номер здания:</label>
                     <input type="text"
                            id="create_buildingNumber"
                            name="Номер_здания"
                            data-source="Здание"
+                           data-join-source="Зона_баланса_материалов"
+                           data-join-column="Номер_ЗБМ"
+                           data-join-value="create_zbmNumber"
                            data-columns-order="Номер_здания, Площадь"
-                           data-order="1"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер здания">
+                           data-input-order="1">
 
+                    <label for="create_responsible">Номер сотрудника:</label>
                     <input type="text"
                            id="create_responsible"
                            name="Номер_сотрудника"
@@ -82,79 +99,90 @@
                            data-name="Номер_сотрудника"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите ID ответственного">
+                           data-input-order="2">
 
+                    <label for="create_roomNumber">Номер помещения:</label>
                     <input type="text"
                            id="create_roomNumber"
                            name="Номер_помещения"
-                           placeholder="Введите номер помещения для создания">
+                           data-input-order="3">
 
-                    <button class="greenButton" type="submit">Отправить</button>
+                    <button class="greenButton" type="submit" disabled>Отправить</button>
                 </form>
 
                 <!-- Форма изменения для Room -->
                 <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
                     <h1>Изменение Помещения</h1>
+
+                    <label for="edit_zbmNumber">Номер ЗБМ:</label>
                     <input type="text"
                            id="edit_zbmNumber"
                            data-edit-field="Номер_ЗБМ"
                            name="Номер_ЗБМ"
                            data-source="Зона_баланса_материалов"
                            data-name="Номер_ЗБМ"
-                           data-order="0"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер ЗБМ для изменения">
+                           data-input-order="0">
 
+                    <label for="edit_buildingNumber">Номер здания:</label>
                     <input type="text"
                            id="edit_buildingNumber"
                            data-edit-field="Номер_здания"
                            name="Номер_здания"
                            data-source="Здание"
                            data-name="Номер_здания"
-                           data-order="1"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер здания для изменения">
+                           data-input-order="1">
 
+                    <label for="edit_responsible">Номер сотрудника:</label>
                     <input type="number"
                            id="edit_responsible"
-                           data-edit-field="Ответственный"
-                           name="Ответственный"
-                           placeholder="Введите ID ответственного">
+                           name="Номер_сотрудника"
+                           data-source="Сотрудник"
+                           data-columns-order="Номер_сотрудника, Фамилия, Имя, Отчество"
+                           data-name="Номер_сотрудника"
+                           autocomplete="off"
+                           readonly
+                           data-input-order="2">
 
+                    <label for="edit_roomNumber">Номер помещения:</label>
                     <input type="text"
                            id="edit_roomNumber"
                            data-edit-field="Номер_помещения"
                            name="Номер_помещения"
-                           placeholder="Введите номер помещения для изменения">
+                           data-input-order="3">
 
-                    <button class="greenButton" type="submit">Отправить</button>
+                    <button class="greenButton" type="submit" disabled>Отправить</button>
                 </form>
 
                 <!-- Форма удаления для Room -->
                 <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
                     <h1>Удаление Помещения</h1>
+
+                    <label for="delete_zbmNumber">Номер ЗБМ:</label>
                     <input type="text"
                            id="delete_zbmNumber"
-                           data-delete-field="Номер_ЗБМ"
                            name="Номер_ЗБМ"
                            data-source="Зона_баланса_материалов"
-                           data-order="0"
+                           data-columns-order="Номер_ЗБМ, Площадь"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер ЗБМ для удаления">
+                           data-input-order="0">
 
+                    <label for="delete_buildingNumber">Номер здания:</label>
                     <input type="text"
                            id="delete_buildingNumber"
-                           data-delete-field="Номер_здания"
+                           data-edit-field="Номер_здания"
                            name="Номер_здания"
                            data-source="Здание"
-                           data-order="1"
+                           data-name="Номер_здания"
                            autocomplete="off"
                            readonly
-                           placeholder="Введите номер здания для удаления">
-                    <button class="redButton" type="submit">Отправить</button>
+                           data-input-order="1">
+
+                    <button class="redButton" type="submit" disabled>Отправить</button>
                 </form>
             </div>
         </div>
@@ -175,13 +203,13 @@
                 </th>
 
                 <th name="Номер_здания"
-                    data-expanded-source="Зона_баланса_материалов"
+                    data-expanded-source="Здание"
                     data-expended-columns="Номер_здания, Площадь"
                     data-expanded-prefix="Номер: *$ Площадь: *">
                     Здание
                 </th>
 
-                <th name="Ответственный"
+                <th name="Номер_сотрудника"
                     data-expanded-source="Сотрудник"
                     data-expended-columns="Фамилия, Имя, Отчество"
                     data-expanded-prefix="* * *">
