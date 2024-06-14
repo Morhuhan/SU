@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     var mainTable = document.getElementById('mainTable');
-    UpdateNavigationPanel();
     GetPageFromTable(1);
     AttachDataSourceRowClick();
     AddSortingToTableHeaders(mainTable);
@@ -33,6 +32,7 @@ function AddRowToTable(jsonRow, table) {
 
 function GetPageFromTable(pageNumber) {
     currentPage = pageNumber;
+    UpdateNavigationPanel();
     var itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
     var mainTable = document.getElementById('mainTable');
     var tableName = mainTable.getAttribute('name');
@@ -116,7 +116,7 @@ function SortTable(table, columnIndex) {
     }
 }
 
-function formatDataWithPrefix(data, prefix) {
+function FormatDataWithPrefix(data, prefix) {
     // Если data не массив, превращаем его в массив
     if (!Array.isArray(data)) {
         data = [data];
@@ -164,7 +164,7 @@ function GetExpandedData(cell, header) {
         var orderedData = expandedColumns.map(column => data[column]);
 
         // Форматируем данные с префиксом
-        var formattedData = formatDataWithPrefix(orderedData, expandedPrefix);
+        var formattedData = FormatDataWithPrefix(orderedData, expandedPrefix);
 
         // Устанавливаем отформатированные данные в ячейку
         cell.innerHTML  = formattedData;
@@ -205,8 +205,7 @@ function SubmitCreateForm(event) {
                 throw new Error(error.error);
             });
         }
-        GetPageFromTable(currentPage, mainTable);
-        UpdateNavigationPanel();
+        GetPageFromTable(currentPage);
     })
     .catch(error => {
         alert(error.message);
@@ -394,7 +393,7 @@ function UpdateNavigationPanel() {
                 button.innerText = i;
                 button.onclick = function() {
                     currentPage = i; // Обновление currentPage при клике
-                    GetPageFromTable(i, mainTable);
+                    GetPageFromTable(i);
                     var buttons = navigationPanel.getElementsByTagName('button');
                     for (var j = 0; j < buttons.length; j++) {
                         buttons[j].classList.remove('active');
@@ -931,6 +930,8 @@ function ModalCreateAct(invoiceType) {
   sendButton.addEventListener('click', () => {
     SubmitActClick(modal);
     CloseModal(modal);
+    var modalInvoice = document.getElementById('modalInvoice');
+    CloseModal(modalInvoice);
   });
 
   // Создаем кнопку закрыть
@@ -1003,7 +1004,8 @@ function SubmitActClick(modal) {
             .then(response => response.json())
             .then(data => {
                 GetPageFromTable(currentPage);
-                console.log('Success:', data);
+                var UEMenu_number = document.getElementById('UEMenu_number');
+                UEMenu_number.textContent = invoiceNumber;
             })
             .catch(error => {
                 alert(error.message);
@@ -1163,73 +1165,80 @@ function ModalCreateUE() {
 }
 
 function SubmitUEClick(modal) {
-  let data = {};
+    let data = {};
 
-  const inputs = modal.querySelectorAll('input');
-  inputs.forEach(input => {
-    data[input.id] = input.value;
-  });
-
-  const jsonData = JSON.stringify(data);
-
-  fetch('/addData/Учетная_единица', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: jsonData,
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Success:', data);
-
-    const SerialNumberValue = modal.querySelector('#Серийный_номер').value;
-
-    const newData = {
-      Номер_накладной: document.getElementById('UEMenu_number').textContent,
-      Серийный_номер: SerialNumberValue
-    };
-
-    const newJsonData = JSON.stringify(newData);
-
-    return fetch('/addData/УЕ_Накладная', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: newJsonData,
-    });
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Success:', data);
-
-    // Close the modal using the CloseModal function
-    CloseModal(modal);
-
-    // Retrieve UEMenuNumberValue again
-    const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
-
-    // Find the table row with the matching UEMenuNumberValue
-    const table = document.getElementById('mainTable');
-    const rows = table.querySelectorAll('tr');
-    let targetRow = null;
-
-    rows.forEach(row => {
-      const firstCell = row.cells[0];
-      if (firstCell && firstCell.textContent === UEMenuNumberValue) {
-        targetRow = row;
-      }
+    const inputs = modal.querySelectorAll('input');
+    inputs.forEach(input => {
+        data[input.id] = input.value;
     });
 
-    // Call the InvoiceRowClick function with the found row
-    if (targetRow) {
-      InvoiceRowClick(targetRow);
-    }
-  })
-  .catch((error) => {
-    console.error('Error:', error);
-  });
+    const jsonData = JSON.stringify(data);
+
+    fetch('/addData/Учетная_единица', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: jsonData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+
+        const SerialNumberValue = modal.querySelector('#Серийный_номер').value;
+
+        const newData = {
+            Номер_накладной: document.getElementById('UEMenu_number').textContent,
+            Серийный_номер: SerialNumberValue
+        };
+
+        const newJsonData = JSON.stringify(newData);
+
+        return fetch('/addData/УЕ_Накладная', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: newJsonData,
+        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errorBody => {
+                throw new Error(errorBody.error);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+
+        // Close the modal using the CloseModal function
+        CloseModal(modal);
+
+        // Retrieve UEMenuNumberValue again
+        const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
+
+        // Find the table row with the matching UEMenuNumberValue
+        const table = document.getElementById('mainTable');
+        const rows = table.querySelectorAll('tr');
+        let targetRow = null;
+
+        rows.forEach(row => {
+            const firstCell = row.cells[0];
+            if (firstCell && firstCell.textContent === UEMenuNumberValue) {
+                targetRow = row;
+            }
+        });
+
+        // Call the InvoiceRowClick function with the found row
+        if (targetRow) {
+            InvoiceRowClick(targetRow);
+        }
+    })
+    .catch((error) => {
+        alert(error);
+    });
 }
 
 

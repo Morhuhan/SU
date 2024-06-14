@@ -35,12 +35,12 @@ public class MainRestController {
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
-/*    @PostMapping("/getPage/{tableName}")
+    @PostMapping("/getPage/{tableName}")
     public ResponseEntity<?> getDataUE(@RequestBody JsonNode jsonNode,
                                        @PathVariable("tableName") String tableName) {
         List<String> data = dao.getDataUEFromTable(jsonNode, tableName);
         return new ResponseEntity<>(data, HttpStatus.OK);
-    }*/
+    }
 
     @PostMapping("/getAllRecords/{tableName}")
     public ResponseEntity<?> getAllRecords(
