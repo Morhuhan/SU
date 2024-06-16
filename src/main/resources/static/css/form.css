@@ -89,23 +89,33 @@ header {
 }
 
 .container_buttons {
-    width: 370px;
     padding: 10px;
     display: flex;
     justify-content: center;
-    margin-bottom: 10px;
 }
 
 .container_buttons button {
     margin-right: 10px;
 }
 
-.container_table_navigationPanel {
-    display: flex;
-    flex-direction: column;
+.container_nav_table_search{
+    height: 690px;
+    width: 885px;
+    border: 1px solid;
+    margin-left: 5px;
+    margin-top: 10px;
+}
+
+.container_table {
+    overflow-y: auto;
+    overflow-x: auto;
+    height: 563px;
+    width: auto;
+    border: 1px solid;
 }
 
 .table  {
+    width: 100%;
     margin-top: 10px;
     border-collapse: collapse;
     border: 1px solid black;
@@ -140,13 +150,30 @@ tr.selected {
     position: fixed;
 }
 
+/* Поиск */
+
+.container_searchBar {
+    margin: 5px;
+    border: 1px solid black;
+    margin-top: 12px;
+    padding: 3px;
+}
+
+.container_searchBar select {
+    margin-left: 20px;
+    height: 34px;
+    width: 140px;
+}
+
+.container_searchBar input {
+    width: 400px;
+}
+
 /* Кнопки, лэйблы, импуты */
 
 input {
     width: 100%;
     padding: 8px;
-    margin-bottom: 15px;
-    margin-top: 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
@@ -251,17 +278,41 @@ button:hover {
 /* Панель навигации */
 
 #navigationPanel {
-    margin-bottom: 20px;
-    margin-top: 10px;
-    max-width: 490px;
+    height: 17px;
+    width: 348px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
 }
 
 #navigationPanel button {
-    margin-right: 10px;
+    margin: 0 5px;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
 }
 
 #navigationPanel button.active {
-    background-color: #A9A9A9;
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+#navigationPanel .prev-button {
+    order: -1;
+}
+
+#navigationPanel .next-button {
+    order: 1;
+}
+
+#navigationPanel span {
+    margin-top:7px;
 }
 
 /* СТИЛИ ДЛЯ СТРАНИЦЫ СОЗДАНИЯ НАКЛАДНОЙ */
@@ -300,6 +351,15 @@ button:hover {
   z-index: 200;
 }
 
+.container_nav_invoiceCreateButton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid;
+    margin: 5px;
+    height: 50px;
+}
+
 /* Меню создания УЕ */
 
 #UEMenu {
@@ -316,15 +376,22 @@ button:hover {
     position: fixed;
 }
 
+#UEMenu_table tr.selected{
+    cursor: default;
+    background-color: #f0f0f0;
+}
+
+#UEMenu_table tr{
+    cursor: default;
+    background-color: #f0f0f0;
+}
+
 #UEContainer1 {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin-top: 15px;
     height: 60px;
     width: auto;
-    margin-left: 50px;
-    margin-right: 50px;
 }
 
 #UEMenu_header {
@@ -339,6 +406,7 @@ button:hover {
     width: 80px;
     border: 1px solid black;
     margin-left: 10px;
+    margin-right: 10px;
 }
 
 #UEMenu button {
@@ -352,6 +420,15 @@ button:hover {
     height: 400px;
     width: auto;
     overflow-x: auto;
-    display: block;
 }
 
+#UEContainer1 {
+    display: flex;
+    height: 60px;
+    align-items: center;
+    border: 1px solid;
+}
+
+#UEContainer1 .container_searchBar input {
+    width: 350px;
+}

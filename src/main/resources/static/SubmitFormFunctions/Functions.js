@@ -67,9 +67,7 @@ function GetPageFromTable(pageNumber) {
         result.forEach(jsonRow => {
             AddRowToTable(jsonRow, mainTable);
         });
-
         SortTable(mainTable, 0);
-        AttachInvoiceRowClick();
     })
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
@@ -376,7 +374,6 @@ function UpdateNavigationPanel() {
         var totalItems = data;
         var totalPages = Math.ceil(totalItems / itemsPerPage);
 
-        // Установка currentPage в 1, если totalPages равно 0
         if (totalPages === 0) {
             totalPages = 1;
         }
@@ -387,25 +384,81 @@ function UpdateNavigationPanel() {
             currentPage = 1;
         }
 
-        for (var i = 1; i <= totalPages; i++) {
-            (function(i) {
-                var button = document.createElement('button');
-                button.innerText = i;
-                button.onclick = function() {
-                    currentPage = i; // Обновление currentPage при клике
-                    GetPageFromTable(i);
-                    var buttons = navigationPanel.getElementsByTagName('button');
-                    for (var j = 0; j < buttons.length; j++) {
-                        buttons[j].classList.remove('active');
-                    }
-                    button.classList.add('active');
-                };
-                // Установка класса active для кнопки, соответствующей текущей странице
-                if (i === currentPage) {
-                    button.classList.add('active');
+        // Добавление кнопки для предыдущей страницы
+        var prevButton = document.createElement('button');
+        prevButton.innerText = '<';
+        prevButton.onclick = function() {
+            if (currentPage > 1) {
+                currentPage--;
+                GetPageFromTable(currentPage);
+                updateActivePage();
+            }
+        };
+        navigationPanel.appendChild(prevButton);
+
+        if (totalPages <= 5) {
+            for (var i = 1; i <= totalPages; i++) {
+                addPageButton(i);
+            }
+        } else {
+            addPageButton(1);
+
+            if (currentPage > 3) {
+                var dots = document.createElement('span');
+                dots.innerText = '...';
+                navigationPanel.appendChild(dots);
+            }
+
+            var startPage = Math.max(2, currentPage - 1);
+            var endPage = Math.min(totalPages - 1, currentPage + 1);
+
+            for (var i = startPage; i <= endPage; i++) {
+                addPageButton(i);
+            }
+
+            if (currentPage < totalPages - 2) {
+                var dots = document.createElement('span');
+                dots.innerText = '...';
+                navigationPanel.appendChild(dots);
+            }
+
+            addPageButton(totalPages);
+        }
+
+        // Добавление кнопки для следующей страницы
+        var nextButton = document.createElement('button');
+        nextButton.innerText = '>';
+        nextButton.onclick = function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                GetPageFromTable(currentPage);
+                updateActivePage();
+            }
+        };
+        navigationPanel.appendChild(nextButton);
+
+        function addPageButton(page) {
+            var button = document.createElement('button');
+            button.innerText = page;
+            button.onclick = function() {
+                currentPage = page;
+                GetPageFromTable(currentPage);
+                updateActivePage();
+            };
+            if (page === currentPage) {
+                button.classList.add('active');
+            }
+            navigationPanel.appendChild(button);
+        }
+
+        function updateActivePage() {
+            var buttons = navigationPanel.getElementsByTagName('button');
+            for (var j = 0; j < buttons.length; j++) {
+                buttons[j].classList.remove('active');
+                if (parseInt(buttons[j].innerText) === currentPage) {
+                    buttons[j].classList.add('active');
                 }
-                navigationPanel.appendChild(button);
-            })(i);
+            }
         }
     })
     .catch(error => {
@@ -706,6 +759,115 @@ function BlockElementInput(element) {
         // Если все input элементы заполнены, активируем кнопку, иначе блокируем
         greenButton.disabled = !allFilled;
     }
+}
+
+function ParseJsonToTable(jsonData, table) {
+    // Очищаем текущие строки таблицы, кроме заголовка
+    var tbody = table.querySelector('tbody');
+    if (tbody) {
+        tbody.innerHTML = '';
+    } else {
+        // Если tbody нет, создаем его
+        tbody = document.createElement('tbody');
+        table.appendChild(tbody);
+    }
+
+    // Шаг 1: Примитивное мапирование хедеров таблицы
+    var headers = table.querySelectorAll('th');
+    var headerMap = {};
+
+    headers.forEach(header => {
+        var name = header.getAttribute('name');
+        var expandedColumns = header.getAttribute('data-expanded-columns');
+
+        if (expandedColumns) {
+            headerMap[expandedColumns] = header.cellIndex;
+        } else if (name) {
+            headerMap[name] = header.cellIndex;
+        }
+    });
+
+    // Шаг 2: Добавляем строки данных с помощью функции AddRowToTable
+    jsonData.forEach(dataRow => {
+        AddRowToTable(dataRow, table);
+    });
+}
+
+function FillSearchSelectOptions(selectElement, table) {
+    // Очистим selectElement перед добавлением новых option
+    selectElement.innerHTML = '';
+
+    // Получаем все хедеры таблицы
+    const headers = table.querySelectorAll('thead th');
+
+    // Проходимся по всем хедерам таблицы
+    headers.forEach(header => {
+        // Проверяем, что у хедера нет атрибута hidden и его textContent непустой
+        if (!header.hasAttribute('hidden') && header.textContent.trim() !== '') {
+            // Создаем новый элемент option и задаем ему textContent из хедера
+            const option = document.createElement('option');
+            option.textContent = header.textContent.trim();
+            selectElement.appendChild(option);
+        }
+    });
+}
+
+function MakeSearch(selectElement, table, input) {
+    const sourceTableName = table.getAttribute('name');
+    const url = '/getAllRecords/' + encodeURIComponent(sourceTableName);
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                throw new Error(error.error);
+            });
+        }
+        return response.json();
+    })
+    .then(jsonData => {
+        // Преобразуем каждую строку JSON в объект
+        const records = jsonData.map(record => JSON.parse(record));
+
+        const searchValue = input.value.trim().toLowerCase();
+        const selectedHeader = selectElement.options[selectElement.selectedIndex].textContent.trim();
+
+        // Получаем индекс столбца с textContent, соответствующим выбранному option
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        const headerIndex = headers.findIndex(header => header.textContent.trim() === selectedHeader);
+
+        if (headerIndex === -1) {
+            throw new Error(`Header with text "${selectedHeader}" not found`);
+        }
+
+        const headerName = headers[headerIndex].getAttribute('name');
+
+        // Очищаем текущие строки таблицы, кроме заголовка
+        const tbody = table.querySelector('tbody');
+        tbody.innerHTML = '';
+
+        // Фильтруем строки, которые удовлетворяют критериям поиска
+        const filteredRecords = records.filter(record => {
+            if (record.hasOwnProperty(headerName)) {
+                const cellValue = record[headerName].toString().toLowerCase();
+                return cellValue.includes(searchValue);
+            }
+            return false;
+        });
+
+        // Передаем отфильтрованные данные в функцию ParseJsonToTable
+        ParseJsonToTable(filteredRecords, table);
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
+    });
 }
 
 /////////////////////// СОЗДАНИЕ НАКЛАДНОЙ
@@ -1094,21 +1256,8 @@ function InvoiceRowClick(row) {
     var headers = ueMenuTable.querySelectorAll('thead th');
     var order = Array.from(headers).map(th => th.getAttribute('name'));
 
-    // Очищаем текущие строки таблицы
-    while (ueMenuTable.rows.length > 1) {
-      ueMenuTable.deleteRow(1);
-    }
-
-    // Добавляем новые строки в таблицу
-    data.forEach(rowDataStr => {
-      var rowData = JSON.parse(rowDataStr);  // Преобразуем строку JSON в объект
-      var newRow = ueMenuTable.insertRow();
-
-      order.forEach(columnName => {
-        var newCell = newRow.insertCell();
-        newCell.textContent = rowData[columnName] || '';
-      });
-    });
+    // Добавляем новые строки в таблицу с помощью функции ParseJsonToTable
+    ParseJsonToTable(data, ueMenuTable);
   })
   .catch(error => {
     console.error('Ошибка при получении данных с сервера:', error);
