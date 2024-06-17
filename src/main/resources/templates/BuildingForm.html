@@ -4,17 +4,20 @@
     <meta charset="UTF-8">
     <title>Управление Весами</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
     </script>
 
-    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
-    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 </head>
 <body>
 <header>
+
+
+
     <img id="img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <a href="/invoice">

@@ -734,6 +734,10 @@ function MakeSearch(selectElement, table, input) {
 /////////////////////// УДАЛЕНИЕ/ИЗМЕНЕНИЕ/СОЗДАНИЕ
 
 function CreateRowModal(table) {
+    // Получаем значение pageName из элемента с id "pageName"
+    const pageNameElement = document.getElementById('pageName');
+    const pageName = pageNameElement ? pageNameElement.textContent.trim() : 'Неизвестная страница';
+
     // Создаем окно
     const modal = document.createElement('div');
     modal.id = 'modalCreateRow';
@@ -742,6 +746,11 @@ function CreateRowModal(table) {
 
     // Создаем оверлей
     CreateOverlay(modal);
+
+    // Создаем заголовок
+    const h1 = document.createElement('h1');
+    h1.textContent = 'Создание ' + pageName;
+    modal.appendChild(h1);
 
     // Получаем заголовки таблицы
     const headers = table.querySelectorAll('thead th');
@@ -830,6 +839,141 @@ function CreateRowModalSubmit(modal, table) {
     .catch(error => {
         alert(error.message);
         console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
+function EditRowModal(table) {
+    // Находим строку с классом selected
+    const selectedRow = table.querySelector('tr.selected');
+    if (!selectedRow) {
+        alert('Выберите строку для редактирования.');
+        return;
+    }
+
+    // Получаем значение pageName из элемента с id "pageName"
+    const pageNameElement = document.getElementById('pageName');
+    const pageName = pageNameElement ? pageNameElement.textContent.trim() : 'Неизвестная страница';
+
+    // Создаем окно
+    const modal = document.createElement('div');
+    modal.id = 'modalEditRow';
+    modal.setAttribute('class', 'modal');
+    document.body.appendChild(modal);
+
+    // Создаем оверлей
+    CreateOverlay(modal);
+
+    // Создаем заголовок
+    const h1 = document.createElement('h1');
+    h1.textContent = 'Редактирование ' + pageName;
+    modal.appendChild(h1);
+
+    // Получаем заголовки таблицы
+    const headers = table.querySelectorAll('thead th');
+    const cells = selectedRow.querySelectorAll('td');
+
+    // Проходим по каждому заголовку и создаем соответствующие элементы
+    headers.forEach((header, index) => {
+        const label = document.createElement('label');
+        label.textContent = header.textContent + ': ';
+        label.htmlFor = header.getAttribute('name');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = header.getAttribute('name');
+        input.setAttribute('name', header.getAttribute('name'));
+        input.value = cells[index] ? cells[index].textContent.trim() : '';
+
+        // Проверяем, можно ли редактировать это поле
+        const isEditable = header.getAttribute('data-editable');
+        if (isEditable === 'false') {
+            input.disabled = true;
+        }
+
+        modal.appendChild(label);
+        modal.appendChild(input);
+    });
+
+    // Создаем контейнер для кнопок
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.setAttribute('class', 'container_buttons');
+
+    // Создаем кнопку ОК
+    const okButton = document.createElement('button');
+    okButton.textContent = 'Сохранить';
+    okButton.className = 'greenButton';
+    okButton.addEventListener('click', function() {
+        EditRowModalSubmit(modal, table);
+    });
+
+    // Создаем кнопку закрыть
+    const closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
+
+    buttonsContainer.appendChild(closeButton);
+    buttonsContainer.appendChild(okButton);
+
+    // Добавляем контейнер с кнопками в модальное окно
+    modal.appendChild(buttonsContainer);
+}
+
+function EditRowModalSubmit(modal, table) {
+    const inputs = modal.querySelectorAll('input');
+    const dataForServer = {};
+
+    // Считываем значения всех инпутов, включая disabled
+    inputs.forEach(input => {
+        const hiddenValue = input.getAttribute('data-hidden');
+        dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+    });
+
+    // Зашифровываем название таблицы из атрибута name
+    const tableName = table.getAttribute('name');
+    const encodedTableName = encodeURIComponent(tableName);
+
+    // Отправляем fetch запрос
+    fetch(`/editData/${encodedTableName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataForServer)
+    })
+    .then(response => {
+        // Проверяем статус ответа
+        if (!response.ok) {
+            return response.json().then(errorBody => {
+                throw new Error(errorBody.error);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        // Обновляем содержимое выбранной строки
+        const selectedRow = table.querySelector('tr.selected');
+        UpdateTableRow(selectedRow, dataForServer);
+        CloseModal(modal);
+
+        // Добавляем оповещение об успешном изменении записи
+        alert('Запись успешно изменена!');
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
+function UpdateTableRow(row, data) {
+    const cells = row.querySelectorAll('td');
+    Object.keys(data).forEach((key, index) => {
+        if (cells[index]) {
+            cells[index].textContent = data[key];
+        }
     });
 }
 

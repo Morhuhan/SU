@@ -55,6 +55,8 @@
 </head>
 <body>
 <header>
+    <div hidden id="pageName"> ЗБМ </div>
+
     <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
@@ -89,7 +91,7 @@
 
             <div class="container_buttons">
                 <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
-                <button class="greenButton" type="button" onclick="ModalCreateInvoice()">Изменить</button>
+                <button class="greenButton" type="button" onclick="EditRowModal(mainTable)">Изменить</button>
                 <button class="redButton" type="button" onclick="ModalCreateInvoice()">Удалить</button>
             </div>
         </div>
@@ -98,8 +100,8 @@
             <table id="mainTable" class="table" name="Зона_баланса_материалов">
                 <thead>
                 <tr>
-                    <th name="Номер_ЗБМ">Номер ЗБМ</th>
-                    <th name="Площадь">Площадь ЗБМ</th>
+                    <th name="Номер_ЗБМ" data-editable="false">Номер ЗБМ</th>
+                    <th name="Площадь" data-editable="true">Площадь ЗБМ</th>
                 </tr>
                 </thead>
                 <tbody>

@@ -6,7 +6,6 @@ body {
 
 h1 {
     margin: 0;
-    margin-bottom: 30px;
 }
 
 /* Хедер */
@@ -91,11 +90,8 @@ header {
 .container_buttons {
     padding: 10px;
     display: flex;
+    gap: 10px;
     justify-content: center;
-}
-
-.container_buttons button {
-    margin-right: 10px;
 }
 
 .container_nav_table_search{
@@ -259,6 +255,15 @@ button:hover {
     overflow-y: auto;
     z-index: 9999;
     flex-direction: column;
+}
+
+.modal input[type="text"] {
+    border: 1px solid black;
+}
+
+.modal label {
+    font-size: 16px;
+    color: #black;
 }
 
 #modalDataSource  {

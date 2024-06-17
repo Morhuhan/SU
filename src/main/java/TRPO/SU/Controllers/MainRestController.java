@@ -75,8 +75,8 @@ public class MainRestController {
     public ResponseEntity<?> editData(
             @PathVariable("tableName") String tableName,
             @RequestBody JsonNode jsonNode) {
-        dao.editDataToTable(tableName, jsonNode);
-        return ResponseEntity.ok().build();
+        String data = dao.editDataToTable(tableName, jsonNode);
+        return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
     @PostMapping("/deleteData/{tableName}")
