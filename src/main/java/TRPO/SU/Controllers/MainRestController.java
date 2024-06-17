@@ -44,9 +44,15 @@ public class MainRestController {
 
     @PostMapping("/getAllRecords/{tableName}")
     public ResponseEntity<?> getAllRecords(
-            @RequestBody JsonNode jsonNode,
             @PathVariable("tableName") String tableName) {
-        List<String> data = dao.getAllRecordsFromTable(tableName, jsonNode);
+        List<String> data = dao.getAllRecordsFromTable(tableName);
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @PostMapping("/getAllRecordsJoin")
+    public ResponseEntity<?> getAllRecordsJoin(
+            @RequestBody JsonNode jsonNode) {
+        List<String> data = dao.getAllRecordsJoin(jsonNode);
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 

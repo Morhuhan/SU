@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Управление Весами</title>
+    <title>Управление Накладными</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
@@ -69,15 +69,15 @@
         </select>
     </div>
 
-
+    <h1> Управление Накладными </h1>
 </header>
 
 <div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
     <ul>
+        <li><a href="/invoice">Накладные</a></li>
         <li><a href="/building">Здания</a></li>
         <li><a href="/room">Помещения</a></li>
         <li><a href="/ZBM">ЗБМ</a></li>
-        <li><a href="/Scales">Весы</a></li>
     </ul>
 </div>
 
@@ -103,7 +103,7 @@
 
                     <th name="Номер_сотрудника"
                         data-expanded-source="Сотрудник"
-                        data-expended-columns="Номер_сотрудника, Фамилия, Имя, Отчество"
+                        data-expanded-columns="Номер_сотрудника, Фамилия, Имя, Отчество"
                         data-expanded-prefix="Номер: *: * * *">
                         Сотрудник
                     </th>

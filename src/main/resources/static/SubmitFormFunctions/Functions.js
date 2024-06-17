@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     var mainTable = document.getElementById('mainTable');
     GetPageFromTable(1);
-    AttachDataSourceRowClick();
     AddSortingToTableHeaders(mainTable);
 });
 
@@ -136,7 +135,7 @@ function GetExpandedData(cell, header) {
     cell.setAttribute('data-value', value);
 
     var expandedSource = header.dataset.expandedSource;
-    var expandedColumns = header.dataset.expendedColumns.split(', ');
+    var expandedColumns = header.dataset.expandedColumns.split(', ');
     var columnName = header.getAttribute('name');
     var expandedPrefix = header.dataset.expandedPrefix;
 
@@ -302,228 +301,6 @@ function TableRowClick() {
     this.classList.add("selected");
 }
 
-function AttachDataSourceRowClick() {
-    // Получаем все формы на странице
-    var forms = document.querySelectorAll('form');
-
-    // Перебираем каждую форму
-    forms.forEach(function(form) {
-        // Находим все элементы внутри формы с атрибутом data-source
-        var elementsWithDataSources = form.querySelectorAll('[data-source]');
-
-        // Перебираем найденные элементы
-        elementsWithDataSources.forEach(function(element) {
-            // Навешиваем событие onClick на каждый элемент
-            element.onclick = function() {
-                // Вызываем функцию DataSourceRowClick с аргументом - значением атрибута data-source
-                DataSourceRowClick(element, form);
-            };
-        });
-    });
-}
-
-function DataSourceRowClick(element, form) {
-    var sourceTableName = element.getAttribute('data-source');
-    var joinTableName = element.getAttribute('data-join-source');
-    var joinTableColumn = element.getAttribute('data-join-column');
-    var joinTableValueId = element.getAttribute('data-join-value');
-
-    var joinTableValue = '';
-    if (joinTableValueId) {
-        var joinTableValueElement = document.getElementById(joinTableValueId);
-        if (joinTableValueElement) {
-            joinTableValue = joinTableValueElement.value;
-        }
-    }
-
-    var url = '/getAllRecords/' + encodeURIComponent(sourceTableName);
-
-    var paramsToJoin = {};
-    if (joinTableName && joinTableColumn && joinTableValue) {
-        paramsToJoin = {
-            joinTable: joinTableName,
-            joinColumn: joinTableColumn,
-            value: joinTableValue
-        };
-    }
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(paramsToJoin)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.error);
-            });
-        }
-        return response.json();
-    })
-    .then(result => {
-        CreateModalDataSource(result, element);
-    })
-    .catch(error => {
-        alert(error.message);
-        console.error('There has been a problem with your fetch operation:', error);
-    });
-}
-
-function CreateModalDataSource(data, element) {
-    // Создаем модальное окно
-    const modal = document.createElement('div');
-    modal.classList.add('modal');
-    modal.id = 'modalDataSource';
-
-    // Создаем таблицу
-    const table = document.createElement('table');
-    table.classList.add('table');
-
-    // Получаем порядок столбцов из data-columns-order у element
-    const dataOrder = element.getAttribute('data-columns-order').split(', ');
-
-    // Создаем заголовки таблицы на основе columnsOrder
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    dataOrder.forEach(column => {
-        const th = document.createElement('th');
-        th.textContent = column;
-        headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Создаем тело таблицы
-    const tbody = document.createElement('tbody');
-
-    // Добавляем данные в тело таблицы
-    AddDataToTable(data, tbody, dataOrder);
-
-    // Добавляем тело таблицы в таблицу
-    table.appendChild(tbody);
-
-    const rows = tbody.querySelectorAll('tr');
-    rows.forEach(row => {
-        row.addEventListener('click', function() {
-            DataSourceModalRowClick(element, row, modal);
-        });
-    });
-
-    AddSortingToTableHeaders(table);
-
-    // Добавляем таблицу в модальное окно
-    modal.appendChild(table);
-
-    // Создаем кнопку закрыть
-    var closeButton = document.createElement('button');
-    closeButton.setAttribute('class', 'redButton');
-    closeButton.textContent = 'Закрыть';
-    closeButton.addEventListener('click', function() {
-        CloseModal(modal);
-    });
-
-    modal.appendChild(closeButton);
-
-    // Добавляем модальное окно в тело документа
-    document.body.appendChild(modal);
-
-    // Вызываем функцию для создания оверлея
-    CreateOverlay(modal);
-}
-
-function AddDataToTable(data, tbody, dataOrder) {
-    // Обрабатываем каждый элемент массива data
-    data.forEach(item => {
-        // Если элемент является строкой, пытаемся распарсить его как JSON
-        if (typeof item === 'string') {
-            try {
-                item = JSON.parse(item);
-            } catch (e) {
-                console.error('Item is not valid JSON:', e);
-                // Пропускаем текущий элемент, если он не может быть распарсен
-                return;
-            }
-        }
-
-        // Создаем строку таблицы и добавляем в нее данные
-        const row = document.createElement('tr');
-        dataOrder.forEach(column => {
-            const td = document.createElement('td');
-            td.textContent = item[column] || '';
-            row.appendChild(td);
-        });
-        tbody.appendChild(row);
-    });
-}
-
-function DataSourceModalRowClick(element, row, modal) {
-    // Получаем значение атрибута data-name для input элемента
-    var dataName = element.getAttribute('name');
-
-    // Получаем значение атрибута data-extended для input элемента
-    var dataExtended = element.getAttribute('data-extended');
-
-    // Находим все заголовки в таблице
-    var headers = row.closest('table').querySelectorAll('th');
-
-    // Определяем индекс заголовка, который соответствует dataName
-    var columnIndex = Array.from(headers).findIndex(header => header.textContent.trim() === dataName);
-
-    // Проверяем, что индекс найден
-    if (columnIndex !== -1) {
-        // Находим ячейку в строке по индексу заголовка
-        var selectedCell = row.cells[columnIndex];
-
-        // Вставляем текст из ячейки в скрытое поле data-hidden
-        element.setAttribute('data-hidden', selectedCell.textContent);
-    } else {
-        // Если ячейка не найдена, выводим сообщение об ошибке
-        console.error('No matching header found for data-name');
-        return;
-    }
-
-    // Разделяем значение data-extended на отдельные имена заголовков
-    var extendedHeaders = dataExtended.split(',').map(header => header.trim());
-
-    var combinedData = extendedHeaders.map(headerName => {
-        // Определяем индекс заголовка, который соответствует headerName
-        var headerIndex = Array.from(headers).findIndex(header => header.textContent.trim() === headerName);
-
-        // Проверяем, что индекс найден
-        if (headerIndex !== -1) {
-            // Находим ячейку в строке по индексу заголовка
-            var cell = row.cells[headerIndex];
-            return cell.textContent;
-        } else {
-            console.error(`No matching header found for extended data: ${headerName}`);
-            return '';
-        }
-    }).join(' ');
-
-    // Проверяем тип input элемента
-    if (element.type === 'number') {
-        // Если тип number, пытаемся преобразовать combinedData в число
-        const numericValue = parseFloat(combinedData);
-        if (!isNaN(numericValue)) {
-            element.value = numericValue;
-        } else {
-            console.error('Combined data is not a valid number:', combinedData);
-        }
-    } else {
-        // Если тип не number, вставляем комбинированные данные как есть
-        element.value = combinedData;
-    }
-
-    // Ручной вызов события change после программного изменения значения
-    const event = new Event('change');
-    element.dispatchEvent(event);
-
-    // Вызываем функцию CloseModal с переданным элементом modal
-    CloseModal(modal);
-}
-
 function CreateOverlay(modal) {
   // Поиск элемента overlay по id
   let overlay = document.getElementById('overlay');
@@ -581,45 +358,6 @@ function CloseModal(modal) {
     // Если других модальных окон нет, скрываем overlay
     overlay.style.display = 'none';
   }
-}
-
-function BlockElementInput(element) {
-    // Получаем все дочерние элементы input у element с атрибутом data-input-order
-    const inputs = Array.from(element.querySelectorAll('input[data-input-order]'));
-
-    // Сортируем input элементы по dataInputOrder
-    inputs.sort((a, b) => a.getAttribute('data-input-order') - b.getAttribute('data-input-order'));
-
-    // Переменная для отслеживания, должны ли мы разблокировать следующий input
-    let unlockNext = true;
-
-    // Флаг для проверки заполненности всех input элементов
-    let allFilled = true;
-
-    // Идем по всем input элементам
-    for (let input of inputs) {
-        if (input.value) {
-            // Если input уже заполнен, оставляем его разблокированным
-            input.disabled = false;
-        } else if (unlockNext) {
-            // Если мы должны разблокировать следующий input и он не заполнен
-            input.disabled = false;
-            unlockNext = false;
-            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
-        } else {
-            // Если мы не должны разблокировать следующий input
-            input.disabled = true;
-            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
-        }
-    }
-
-    // Находим кнопку с классом greenButton
-    const greenButton = element.querySelector('.greenButton');
-
-    if (greenButton) {
-        // Если все input элементы заполнены, активируем кнопку, иначе блокируем
-        greenButton.disabled = !allFilled;
-    }
 }
 
 function ParseJsonToTable(jsonData, table) {
@@ -682,7 +420,7 @@ function MakeSearch(selectElement, table, input) {
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({})
+        body: null
     })
     .then(response => {
         if (!response.ok) {
@@ -731,6 +469,232 @@ function MakeSearch(selectElement, table, input) {
     });
 }
 
+function BlockElementInput(element) {
+    // Получаем все дочерние элементы input у element с атрибутом data-input-order
+    const inputs = Array.from(element.querySelectorAll('input[data-input-order]'));
+
+    // Сортируем input элементы по dataInputOrder
+    inputs.sort((a, b) => a.getAttribute('data-input-order') - b.getAttribute('data-input-order'));
+
+    // Переменная для отслеживания, должны ли мы разблокировать следующий input
+    let unlockNext = true;
+
+    // Флаг для проверки заполненности всех input элементов
+    let allFilled = true;
+
+    // Идем по всем input элементам
+    for (let input of inputs) {
+        if (input.value) {
+            // Если input уже заполнен, оставляем его разблокированным
+            input.disabled = false;
+        } else if (unlockNext) {
+            // Если мы должны разблокировать следующий input и он не заполнен
+            input.disabled = false;
+            unlockNext = false;
+            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+        } else {
+            // Если мы не должны разблокировать следующий input
+            input.disabled = true;
+            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+        }
+    }
+
+    // Находим кнопку с классом greenButton
+    const greenButton = element.querySelector('.greenButton');
+
+    if (greenButton) {
+        // Если все input элементы заполнены, активируем кнопку, иначе блокируем
+        greenButton.disabled = !allFilled;
+    }
+}
+
+/////////////////////// DATASOURCE(NEW)
+
+function DataSourceClick(input, mainModal) {
+    const sourceTableName = input.getAttribute('data-expanded-source') || '';
+    const joinTableName = input.getAttribute('data-jointablename') || '';
+    const joinColumnName = input.getAttribute('data-joincolumnname') || '';
+
+    let joinTableValue = null;
+
+    if (joinColumnName) {
+        const inputs = mainModal.querySelectorAll('input');
+        inputs.forEach(modalInput => {
+            if (modalInput.getAttribute('name') === joinColumnName) {
+                joinTableValue = modalInput.getAttribute('data-value');
+            }
+        });
+    }
+
+    let url = '/getAllRecordsJoin';
+    let body = JSON.stringify({
+        tableName: sourceTableName,
+        joinTableName: joinTableName,
+        joinTableValue: joinTableValue || '',
+        joinColumnName: joinColumnName
+    });
+
+    if (!joinTableName || !joinTableValue || !joinColumnName) {
+        url = `/getAllRecords/${sourceTableName}`;
+        body = null;
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: body
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                throw new Error(error.error);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.length === 0) {
+            alert('Не найденно записей');
+        } else {
+            ModalCreateDataSource(data, input, mainModal);
+        }
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
+function ModalCreateDataSource(data, input, mainModal) {
+    // Получаем и разбираем атрибут data-expanded-columns
+    const expandedColumns = input.getAttribute('data-expanded-columns').split(',').map(item => item.trim());
+
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.id = 'modalDataSource';
+    modal.setAttribute('class', 'modal');
+    document.body.appendChild(modal);
+
+    // Создаем оверлей
+    const overlay = document.createElement('div');
+    overlay.setAttribute('class', 'overlay');
+    modal.appendChild(overlay);
+
+    // Создаем таблицу и присваиваем ей класс 'table'
+    const table = document.createElement('table');
+    table.setAttribute('class', 'table');
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    modal.appendChild(table);
+
+    // Создаем хедеры таблицы
+    const headerRow = document.createElement('tr');
+    expandedColumns.forEach(column => {
+        const th = document.createElement('th');
+        th.textContent = column;
+        th.setAttribute('name', column);
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+
+    // Приводим строки data к JSON объектам и заполняем таблицу
+    data.forEach(rowData => {
+        const row = document.createElement('tr');
+        const jsonData = JSON.parse(rowData);
+
+        expandedColumns.forEach(column => {
+            const td = document.createElement('td');
+            td.textContent = jsonData[column] || '';
+            row.appendChild(td);
+        });
+
+        // Добавляем обработчик клика для каждой строки
+        row.addEventListener('click', function() {
+            ModalDataSourceRowClick(input, row, table, modal, mainModal);
+        });
+
+        tbody.appendChild(row);
+    });
+
+    // Создаем контейнер для кнопок
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.setAttribute('class', 'container_buttons');
+
+    // Создаем кнопку закрыть
+    const closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        document.body.removeChild(modal);
+    });
+
+    buttonsContainer.appendChild(closeButton);
+
+    // Добавляем контейнер с кнопками в модальное окно
+    modal.appendChild(buttonsContainer);
+
+}
+
+function ModalDataSourceRowClick(input, row, table, modal, mainModal) {
+    // Получаем значение атрибута name у input
+    const inputName = input.getAttribute('name');
+
+    // Ищем индекс столбца с таким хедером, у которого name такой же
+    let columnIndex = -1;
+    const headers = table.querySelectorAll('th');
+    headers.forEach((header, index) => {
+        if (header.getAttribute('name') === inputName) {
+            columnIndex = index;
+        }
+    });
+
+    if (columnIndex === -1) {
+        console.error('Column with the specified name not found');
+        return;
+    }
+
+    // Получаем значение textContent из ячейки строки row в найденном столбце
+    const cellValue = row.cells[columnIndex].textContent;
+
+    // Записываем значение в атрибут data-value у input
+    input.setAttribute('data-value', cellValue);
+
+    // Получаем атрибут data-expanded-columns у input
+    const expandedColumns = input.getAttribute('data-expanded-columns').split(', ');
+
+    // Получаем атрибут data-expanded-prefix у input
+    const expandedPrefix = input.getAttribute('data-expanded-prefix');
+
+    // Собираем данные для передачи в функцию FormatDataWithPrefix
+    const data = expandedColumns.map(columnName => {
+        let colIndex = -1;
+        headers.forEach((header, index) => {
+            if (header.textContent.trim() === columnName) {
+                colIndex = index;
+            }
+        });
+
+        if (colIndex === -1) {
+            console.error(`Column with name ${columnName} not found`);
+            return '';
+        }
+
+        return row.cells[colIndex].textContent;
+    });
+
+    // Вызываем функцию FormatDataWithPrefix и записываем результат в input
+    const formattedData = FormatDataWithPrefix(data, expandedPrefix);
+    input.value = formattedData;
+
+    CloseModal(modal);
+
+    BlockElementInput(mainModal);
+}
+
 /////////////////////// УДАЛЕНИЕ/ИЗМЕНЕНИЕ/СОЗДАНИЕ
 
 function CreateRowModal(table) {
@@ -759,12 +723,49 @@ function CreateRowModal(table) {
     headers.forEach(header => {
         const label = document.createElement('label');
         label.textContent = header.textContent + ': ';
-        label.htmlFor = header.getAttribute('name');
 
         const input = document.createElement('input');
         input.type = 'text';
         input.id = header.getAttribute('name');
         input.setAttribute('name', header.getAttribute('name'));
+
+        const expandedOrder = header.getAttribute('data-input-order');
+        input.setAttribute('data-input-order', expandedOrder);
+
+        // Проверяем и присваиваем дополнительные атрибуты
+        const expandedSource = header.getAttribute('data-expanded-source');
+        if (expandedSource) {
+            input.setAttribute('data-expanded-source', expandedSource);
+
+            const expandedColumns = header.getAttribute('data-expanded-columns');
+            input.setAttribute('data-expanded-columns', expandedColumns);
+
+            const expandedPrefix = header.getAttribute('data-expanded-prefix');
+            input.setAttribute('data-expanded-prefix', expandedPrefix);
+
+            // Настройки для дополнительных атрибутов
+            input.classList.add('additionalInput');
+            input.readOnly = true;
+            input.setAttribute('autocomplete', 'off');
+
+            // Добавляем обработчик клика
+            input.addEventListener('click', function () {
+                DataSourceClick(input, modal);
+            });
+        } else {
+            // Добавляем обработчик onChange если нет дополнительных атрибутов
+            input.addEventListener('change', function() {
+                BlockElementInput(modal);
+            });
+        }
+
+        const joinTableName = header.getAttribute('data-joinTableName');
+        if (joinTableName) {
+            input.setAttribute('data-joinTableName', joinTableName);
+
+            const joinColumnName = header.getAttribute('data-joinColumnName');
+            input.setAttribute('data-joinColumnName', joinColumnName);
+        }
 
         modal.appendChild(label);
         modal.appendChild(input);
@@ -778,7 +779,7 @@ function CreateRowModal(table) {
     const okButton = document.createElement('button');
     okButton.textContent = 'Создать';
     okButton.className = 'greenButton';
-    okButton.addEventListener('click', function() {
+    okButton.addEventListener('click', function () {
         CreateRowModalSubmit(modal, table);
     });
 
@@ -786,7 +787,7 @@ function CreateRowModal(table) {
     const closeButton = document.createElement('button');
     closeButton.setAttribute('class', 'redButton');
     closeButton.textContent = 'Закрыть';
-    closeButton.addEventListener('click', function() {
+    closeButton.addEventListener('click', function () {
         CloseModal(modal);
     });
 
@@ -795,6 +796,8 @@ function CreateRowModal(table) {
 
     // Добавляем контейнер с кнопками в модальное окно
     modal.appendChild(buttonsContainer);
+
+    BlockElementInput(modal);
 }
 
 function CreateRowModalSubmit(modal, table) {
@@ -805,7 +808,12 @@ function CreateRowModalSubmit(modal, table) {
     inputs.forEach(input => {
         if (input.type !== 'radio' && !input.disabled) {
             const hiddenValue = input.getAttribute('data-hidden');
-            dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+            const expandedSource = input.getAttribute('data-expanded-source');
+            if (expandedSource !== null) {
+                dataForServer[input.id] = input.getAttribute('data-value');
+            } else {
+                dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+            }
         }
     });
 
@@ -876,7 +884,6 @@ function EditRowModal(table) {
     headers.forEach((header, index) => {
         const label = document.createElement('label');
         label.textContent = header.textContent + ': ';
-        label.htmlFor = header.getAttribute('name');
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -888,6 +895,35 @@ function EditRowModal(table) {
         const isEditable = header.getAttribute('data-editable');
         if (isEditable === 'false') {
             input.disabled = true;
+        }
+
+        // Проверяем и присваиваем дополнительные атрибуты
+        const expandedSource = header.getAttribute('data-expanded-source');
+        if (expandedSource) {
+            input.setAttribute('data-expanded-source', expandedSource);
+
+            // Добавляем остальные атрибуты
+            const dataValue = cells[index].getAttribute('data-value');
+            input.setAttribute('data-value', dataValue);
+
+            const expandedColumns = header.getAttribute('data-expanded-columns');
+            input.setAttribute('data-expanded-columns', expandedColumns);
+
+            const expandedPrefix = header.getAttribute('data-expanded-prefix');
+            input.setAttribute('data-expanded-prefix', expandedPrefix);
+
+            const expandedOrder = header.getAttribute('data-input-order');
+            input.setAttribute('data-input-order', expandedOrder);
+
+            // Настройки для дополнительных атрибутов
+            input.classList.add('additionalInput');
+            input.readOnly = true;
+            input.setAttribute('autocomplete', 'off');
+
+            // Добавляем обработчик клика
+            input.addEventListener('click', function() {
+                DataSourceClick(input, modal);
+            });
         }
 
         modal.appendChild(label);
@@ -928,7 +964,12 @@ function EditRowModalSubmit(modal, table) {
     // Считываем значения всех инпутов, включая disabled
     inputs.forEach(input => {
         const hiddenValue = input.getAttribute('data-hidden');
-        dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+        const expandedSource = input.getAttribute('data-expanded-source');
+        if (expandedSource !== null) {
+            dataForServer[input.id] = input.getAttribute('data-value');
+        } else {
+            dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+        }
     });
 
     // Зашифровываем название таблицы из атрибута name
@@ -956,7 +997,7 @@ function EditRowModalSubmit(modal, table) {
         console.log('Success:', data);
         // Обновляем содержимое выбранной строки
         const selectedRow = table.querySelector('tr.selected');
-        UpdateTableRow(selectedRow, dataForServer);
+        UpdateTableRow(selectedRow, dataForServer, table, modal);
         CloseModal(modal);
 
         // Добавляем оповещение об успешном изменении записи
@@ -968,12 +1009,83 @@ function EditRowModalSubmit(modal, table) {
     });
 }
 
-function UpdateTableRow(row, data) {
+function UpdateTableRow(row, data, table, modal) {
     const cells = row.querySelectorAll('td');
+    const headers = table.querySelectorAll('th');
+
     Object.keys(data).forEach((key, index) => {
-        if (cells[index]) {
-            cells[index].textContent = data[key];
+        const header = headers[index];
+        const inputElement = modal.querySelector(`#${key}`);
+
+        if (cells[index] && header) {
+            if (header.getAttribute('data-expanded-source') !== null) {
+                cells[index].setAttribute('data-value', inputElement ? inputElement.value : data[key]);
+                cells[index].textContent = inputElement ? inputElement.value : '';
+            } else {
+                cells[index].textContent = data[key];
+            }
         }
+    });
+}
+
+function DeleteSelectedRow(table) {
+    // Находим строку с классом 'selected'
+    const selectedRow = table.querySelector('tr.selected');
+    if (!selectedRow) {
+        alert('Не выбрана строка для удаления');
+        return;
+    }
+
+    // Получаем подтверждение от пользователя
+    const userConfirmed = confirm('Вы действительно хотите удалить выбранную строку?');
+    if (!userConfirmed) {
+        return;
+    }
+
+    // Получаем заголовки таблицы
+    const headers = table.querySelectorAll('thead th');
+    const dataForServer = {};
+
+    // Проходим по каждому заголовку и считываем данные из выбранной строки
+    headers.forEach((header, index) => {
+        const cell = selectedRow.cells[index];
+        const cellData = cell.getAttribute('data-value') || cell.textContent.trim();
+
+        // Используем атрибут name заголовка как ключ для данных
+        const key = header.getAttribute('name');
+        if (key) {
+            dataForServer[key] = cellData;
+        }
+    });
+
+    // Зашифровываем название таблицы из атрибута name
+    const tableName = table.getAttribute('name');
+    const encodedTableName = encodeURIComponent(tableName);
+
+    // Отправляем fetch запрос на удаление данных
+    fetch(`/deleteData/${encodedTableName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataForServer)
+    })
+    .then(response => {
+        // Проверяем статус ответа
+        if (!response.ok) {
+            return response.json().then(errorBody => {
+                throw new Error(errorBody.error);
+            });
+        }
+        // Удаляем строку из таблицы после успешного запроса
+        selectedRow.remove();
+        // Вызов функции для обновления страницы таблицы после успешного запроса
+        GetPageFromTable(currentPage);
+        alert('Запись успешно удалена!');
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
     });
 }
 
@@ -1008,7 +1120,6 @@ function ModalCreateInvoice() {
 
     const employeeLabel = document.createElement('label');
     employeeLabel.textContent = 'Подписавший сотрудник: ';
-    employeeLabel.htmlFor = 'Номер_сотрудника';
     modal.insertBefore(employeeLabel, employeeInput);
 
     // Создаем и добавляем поля ввода для даты
@@ -1020,13 +1131,11 @@ function ModalCreateInvoice() {
 
     const dateLabel = document.createElement('label');
     dateLabel.textContent = 'Дата создания накладной: ';
-    dateLabel.htmlFor = 'Дата_подписания';
     modal.insertBefore(dateLabel, dateInput);
 
     // Создаем и добавляем select поле и его label
     const actSelectLabel = document.createElement('label');
     actSelectLabel.textContent = 'Укажите тип накладной: ';
-    actSelectLabel.htmlFor = 'actType';
     modal.appendChild(actSelectLabel);
 
     const actSelect = document.createElement('select');
@@ -1398,7 +1507,6 @@ function ModalCreateUE() {
 
     const serialNumberLabel = document.createElement('label');
     serialNumberLabel.textContent = 'Серийный номер: ';
-    serialNumberLabel.htmlFor = 'Серийный_номер';
     modal.insertBefore(serialNumberLabel, serialNumberInput);
 
     // Создаем контейнер для кнопок
@@ -1506,7 +1614,207 @@ function SubmitUEClick(modal) {
     });
 }
 
+/////////////////////// DATA SOURCE
 
+function DataSourceRowClick(element, form) {
+    var sourceTableName = element.getAttribute('data-source');
+    var joinTableName = element.getAttribute('data-join-source');
+    var joinTableColumn = element.getAttribute('data-join-column');
+    var joinTableValueId = element.getAttribute('data-join-value');
 
+    var joinTableValue = '';
+    if (joinTableValueId) {
+        var joinTableValueElement = document.getElementById(joinTableValueId);
+        if (joinTableValueElement) {
+            joinTableValue = joinTableValueElement.value;
+        }
+    }
 
+    var url = '/getAllRecords/' + encodeURIComponent(sourceTableName);
+
+    var paramsToJoin = {};
+    if (joinTableName && joinTableColumn && joinTableValue) {
+        paramsToJoin = {
+            joinTable: joinTableName,
+            joinColumn: joinTableColumn,
+            value: joinTableValue
+        };
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paramsToJoin)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                throw new Error(error.error);
+            });
+        }
+        return response.json();
+    })
+    .then(result => {
+        CreateModalDataSource(result, element);
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
+function CreateModalDataSource(data, element) {
+    // Создаем модальное окно
+    const modal = document.createElement('div');
+    modal.classList.add('modal');
+    modal.id = 'modalDataSource';
+
+    // Создаем таблицу
+    const table = document.createElement('table');
+    table.classList.add('table');
+
+    // Получаем порядок столбцов из data-columns-order у element
+    const dataOrder = element.getAttribute('data-columns-order').split(', ');
+
+    // Создаем заголовки таблицы на основе columnsOrder
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    dataOrder.forEach(column => {
+        const th = document.createElement('th');
+        th.textContent = column;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Создаем тело таблицы
+    const tbody = document.createElement('tbody');
+
+    // Добавляем данные в тело таблицы
+    AddDataToTable(data, tbody, dataOrder);
+
+    // Добавляем тело таблицы в таблицу
+    table.appendChild(tbody);
+
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        row.addEventListener('click', function() {
+            DataSourceModalRowClick(element, row, modal);
+        });
+    });
+
+    AddSortingToTableHeaders(table);
+
+    // Добавляем таблицу в модальное окно
+    modal.appendChild(table);
+
+    // Создаем кнопку закрыть
+    var closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
+
+    modal.appendChild(closeButton);
+
+    // Добавляем модальное окно в тело документа
+    document.body.appendChild(modal);
+
+    // Вызываем функцию для создания оверлея
+    CreateOverlay(modal);
+}
+
+function AddDataToTable(data, tbody, dataOrder) {
+    // Обрабатываем каждый элемент массива data
+    data.forEach(item => {
+        // Если элемент является строкой, пытаемся распарсить его как JSON
+        if (typeof item === 'string') {
+            try {
+                item = JSON.parse(item);
+            } catch (e) {
+                console.error('Item is not valid JSON:', e);
+                // Пропускаем текущий элемент, если он не может быть распарсен
+                return;
+            }
+        }
+
+        // Создаем строку таблицы и добавляем в нее данные
+        const row = document.createElement('tr');
+        dataOrder.forEach(column => {
+            const td = document.createElement('td');
+            td.textContent = item[column] || '';
+            row.appendChild(td);
+        });
+        tbody.appendChild(row);
+    });
+}
+
+function DataSourceModalRowClick(element, row, modal) {
+    // Получаем значение атрибута data-name для input элемента
+    var dataName = element.getAttribute('name');
+
+    // Получаем значение атрибута data-extended для input элемента
+    var dataExtended = element.getAttribute('data-extended');
+
+    // Находим все заголовки в таблице
+    var headers = row.closest('table').querySelectorAll('th');
+
+    // Определяем индекс заголовка, который соответствует dataName
+    var columnIndex = Array.from(headers).findIndex(header => header.textContent.trim() === dataName);
+
+    // Проверяем, что индекс найден
+    if (columnIndex !== -1) {
+        // Находим ячейку в строке по индексу заголовка
+        var selectedCell = row.cells[columnIndex];
+
+        // Вставляем текст из ячейки в скрытое поле data-hidden
+        element.setAttribute('data-hidden', selectedCell.textContent);
+    } else {
+        // Если ячейка не найдена, выводим сообщение об ошибке
+        console.error('No matching header found for data-name');
+        return;
+    }
+
+    // Разделяем значение data-extended на отдельные имена заголовков
+    var extendedHeaders = dataExtended.split(',').map(header => header.trim());
+
+    var combinedData = extendedHeaders.map(headerName => {
+        // Определяем индекс заголовка, который соответствует headerName
+        var headerIndex = Array.from(headers).findIndex(header => header.textContent.trim() === headerName);
+
+        // Проверяем, что индекс найден
+        if (headerIndex !== -1) {
+            // Находим ячейку в строке по индексу заголовка
+            var cell = row.cells[headerIndex];
+            return cell.textContent;
+        } else {
+            console.error(`No matching header found for extended data: ${headerName}`);
+            return '';
+        }
+    }).join(' ');
+
+    // Проверяем тип input элемента
+    if (element.type === 'number') {
+        // Если тип number, пытаемся преобразовать combinedData в число
+        const numericValue = parseFloat(combinedData);
+        if (!isNaN(numericValue)) {
+            element.value = numericValue;
+        } else {
+            console.error('Combined data is not a valid number:', combinedData);
+        }
+    } else {
+        // Если тип не number, вставляем комбинированные данные как есть
+        element.value = combinedData;
+    }
+
+    // Ручной вызов события change после программного изменения значения
+    const event = new Event('change');
+    element.dispatchEvent(event);
+
+    // Вызываем функцию CloseModal с переданным элементом modal
+    CloseModal(modal);
+}
 

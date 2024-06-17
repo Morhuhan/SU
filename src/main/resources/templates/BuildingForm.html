@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Управление Весами</title>
+    <title>  Управление Зданиями </title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
@@ -10,24 +10,59 @@
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            var mainTable = document.getElementById('mainTable');
+            var invoiceSelect = document.getElementById('invoiceSelect');
+            FillSearchSelectOptions(invoiceSelect, mainTable);
+
+            var UEMenu_table = document.getElementById('UEMenu_table');
+            var UESelect = document.getElementById('UESelect');
+            FillSearchSelectOptions(UESelect, UEMenu_table);
+
+            AddSortingToTableHeaders(UEMenu_table);
+
+            // Функция для добавления слушателей на строки таблицы
+            function addRowListeners(rows) {
+                Array.prototype.forEach.call(rows, function(row) {
+                    row.addEventListener('click', function() {
+                        if (row.classList.contains('selected')) {
+                            InvoiceRowClick(row);
+                        }
+                    });
+                });
+            }
+
+            // Добавляем слушатель на существующие строки таблицы
+            addRowListeners(mainTable.getElementsByTagName('tr'));
+
+            // Используем MutationObserver для отслеживания добавления новых строк
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Добавляем слушатели только к новым строкам
+                        addRowListeners(mutation.addedNodes);
+                    }
+                });
+            });
+
+            observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+
+        });
     </script>
 
 </head>
 <body>
 <header>
+    <div hidden id="pageName"> Здания </div>
 
-
-
-    <img id="img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
-
-    <a href="/invoice">
-        <img id="img2" src="css/nakladnaya.png">
-    </a>
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
     <div>
         <label for="itemsPerPage">Строк на странице:</label>
-        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+        <select id="itemsPerPage" onchange="GetPageFromTable(1);">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -35,125 +70,70 @@
             <option value="100" selected>100</option>
         </select>
     </div>
+
+    <h1> Управление Зданиями </h1>
 </header>
 
 <div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
     <ul>
+        <li><a href="/invoice">Накладные</a></li>
         <li><a href="/building">Здания</a></li>
         <li><a href="/room">Помещения</a></li>
         <li><a href="/ZBM">ЗБМ</a></li>
-        <li><a href="/Scales">Весы</a></li>
     </ul>
 </div>
 
 <div class="container_main">
-    <div class="container_formsMenu">
-        <div class="formsMenu">
+    <div class="container_nav_table_search">
+
+        <div class="container_nav_invoiceCreateButton">
+            <!-- Место под панель навигации -->
+            <div id="navigationPanel"></div>
+
             <div class="container_buttons">
-                <button class="redButton" type="button" onclick="DeleteButtonClick(mainTable)">Удалить</button>
-                <button class="redButton" type="button" onclick="EditButtonClick(mainTable)">Изменить</button>
-                <button class="greenButton" type="button" onclick="setupFormToggle('createForm')">Создать</button>
+                <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
+                <button class="greenButton" type="button" onclick="EditRowModal(mainTable)">Изменить</button>
+                <button class="redButton" type="button" onclick="DeleteSelectedRow(mainTable)">Удалить</button>
             </div>
+        </div>
 
-            <div id="forms">
-                <!-- Форма создания для Building -->
-                <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                    <h1>Создание Здания</h1>
+        <div class="container_table">
+            <table id="mainTable" class="table" name="Здание">
+                <thead>
+                <tr>
+                    <th name="Номер_ЗБМ"
+                        data-expanded-source="Зона_баланса_материалов"
+                        data-expanded-columns="Номер_ЗБМ, Площадь"
+                        data-expanded-prefix="ЗБМ: *, Площадь: *"
+                        data-editable="false"
+                        data-input-order="0">
+                        ЗБМ
+                    </th>
 
-                    <label for="create_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="create_zbmNumber"
-                           name="Номер_ЗБМ"
-                           data-source="Зона_баланса_материалов"
-                           data-columns-order="Номер_ЗБМ, Площадь"
-                           autocomplete="off"
-                           readonly>
+                    <th name="Номер_здания" data-editable="false"
+                        data-input-order="1">
+                        Номер помещения </th>
 
-                    <label for="create_buildingNumber">Номер здания:</label>
-                    <input type="text"
-                           id="create_buildingNumber"
-                           name="Номер_здания">
+                    <th name="Площадь" data-editable="true"
+                        data-input-order="2">
+                        Площадь помещения </th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Здесь будет динамически заполняться таблица -->
+                </tbody>
+            </table>
+        </div>
 
-                    <label for="create_area">Площадь:</label>
-                    <input type="text"
-                           id="create_area"
-                           name="Площадь">
-                    <button class="greenButton" type="submit">Отправить</button>
-                </form>
-
-                <!-- Форма изменения для Building -->
-                <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                    <h1>Изменение Здания</h1>
-
-                    <label for="edit_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="edit_zbmNumber"
-                           data-edit-field="Номер_ЗБМ"
-                           name="Номер_ЗБМ"
-                           data-source="Зона_баланса_материалов"
-                           data-columns-order="Номер_ЗБМ, Площадь"
-                           autocomplete="off"
-                           readonly>
-
-                    <label for="edit_buildingNumber">Номер здания:</label>
-                    <input type="text"
-                           id="edit_buildingNumber"
-                           name="Номер_здания">
-
-                    <label for="edit_area">Площадь:</label>
-                    <input type="text"
-                           id="edit_area"
-                           name="Площадь">
-
-                    <button class="greenButton" type="submit">Отправить</button>
-                </form>
-
-                <!-- Форма удаления для Building -->
-                <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                    <h1>Удаление Здания</h1>
-
-                    <label for="delete_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="delete_zbmNumber"
-                           data-delete-field="Номер_ЗБМ"
-                           name="Номер_ЗБМ"
-                           data-source="Зона_баланса_материалов"
-                           autocomplete="off"
-                           readonly>
-
-                    <label for="delete_buildingNumber">Номер здания:</label>
-                    <input type="text"
-                           id="delete_buildingNumber"
-                           name="Номер_здания">
-
-                    <button class="redButton" type="submit">Отправить</button>
-                </form>
-            </div>
+        <div class="container_searchBar">
+            <select id="invoiceSelect">
+            </select>
+            <input type="text"  id="invoiceSearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(invoiceSelect, mainTable, invoiceSearchInput)">
         </div>
     </div>
 
-    <div>
-        <!-- Место под панель навигации -->
-        <div id="navigationPanel"></div>
-
-        <table id="mainTable" class="table" name="Здание">
-            <thead>
-            <tr>
-                <th name="Номер_ЗБМ"
-                    data-expanded-source="Зона_баланса_материалов"
-                    data-expended-columns="Номер_ЗБМ, Площадь"
-                    data-expanded-prefix="Номер: *$ Площадь: *">
-                    ЗБМ
-                </th>
-                <th name="Номер_здания">Номер здания</th>
-                <th name="Площадь">Площадь</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Здесь будет динамически заполняться таблица -->
-            </tbody>
-        </table>
-    </div>
 </div>
+
+
 </body>
 </html>

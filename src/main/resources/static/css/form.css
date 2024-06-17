@@ -20,6 +20,10 @@ header {
     align-items: center;
 }
 
+header h1 {
+    margin-left: 10px;
+}
+
 #img1 {
     height: 70px;
     width: auto;
@@ -261,6 +265,10 @@ button:hover {
     border: 1px solid black;
 }
 
+.modal input[disabled]:hover {
+    background-color: #cccccc;
+}
+
 .modal label {
     font-size: 16px;
     color: #black;
@@ -268,9 +276,8 @@ button:hover {
 
 #modalDataSource  {
     max-width: 800px;
-    max-height: 800px;
-    width: auto;
-    height: auto;
+    max-height: 600px;
+    border: 1px solid;
 }
 
 #modalDataSource .table {
@@ -284,6 +291,19 @@ button:hover {
     margin-top: 25px;
 }
 
+.additionalInput {
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.additionalInput:focus {
+    outline: none;
+}
+
+.additionalInput:hover {
+    background-color: #e0e0e0;
+}
 
 /* Панель навигации */
 

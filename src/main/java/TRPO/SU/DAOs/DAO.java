@@ -32,6 +32,12 @@ public class DAO {
         return jdbcTemplate.queryForList(sql, String.class, jsonText);
     }
 
+    public List<String> getAllRecordsJoin(JsonNode jsonNode) throws DataAccessException {
+        String sql = "SELECT * FROM public.\"получить_все_записи_join\"(?::jsonb)";
+        String jsonText = jsonNode.toString();
+        return jdbcTemplate.queryForList(sql, String.class, jsonText);
+    }
+
     public String addDataToTable(String tableName, JsonNode jsonNode) throws DataAccessException  {
         String jsonString = jsonNode.toString();
         String sql = "SELECT * FROM добавить_запись_в_таблицу(?, ?::jsonb)";
@@ -44,10 +50,9 @@ public class DAO {
         return jdbcTemplate.queryForObject(sql, String.class, tableName, jsonString);
     }
 
-    public List<String> getAllRecordsFromTable(String tableName, JsonNode jsonNode) throws DataAccessException {
-        String jsonString = jsonNode.toString();
-        String sql = "SELECT * FROM получить_записи_join(?, ?::jsonb)";
-        return jdbcTemplate.queryForList(sql, String.class, tableName, jsonString);
+    public List<String> getAllRecordsFromTable(String tableName) throws DataAccessException {
+        String sql = "SELECT * FROM getallrecords(?)";
+        return jdbcTemplate.queryForList(sql, String.class, tableName);
     }
 
     public String getExpandedData(JsonNode jsonNode) throws DataAccessException {

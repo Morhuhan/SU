@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Управление Весами</title>
+    <title>Управление ЗБМ</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
@@ -71,14 +71,15 @@
         </select>
     </div>
 
+    <h1> Управление ЗБМ </h1>
 </header>
 
 <div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
     <ul>
+        <li><a href="/invoice">Накладные</a></li>
         <li><a href="/building">Здания</a></li>
         <li><a href="/room">Помещения</a></li>
         <li><a href="/ZBM">ЗБМ</a></li>
-        <li><a href="/Scales">Весы</a></li>
     </ul>
 </div>
 
@@ -92,7 +93,7 @@
             <div class="container_buttons">
                 <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
                 <button class="greenButton" type="button" onclick="EditRowModal(mainTable)">Изменить</button>
-                <button class="redButton" type="button" onclick="ModalCreateInvoice()">Удалить</button>
+                <button class="redButton" type="button" onclick="DeleteSelectedRow(mainTable)">Удалить</button>
             </div>
         </div>
 
@@ -100,8 +101,13 @@
             <table id="mainTable" class="table" name="Зона_баланса_материалов">
                 <thead>
                 <tr>
-                    <th name="Номер_ЗБМ" data-editable="false">Номер ЗБМ</th>
-                    <th name="Площадь" data-editable="true">Площадь ЗБМ</th>
+                    <th name="Номер_ЗБМ"
+                        data-editable="false"
+                        data-input-order="0">Номер ЗБМ</th>
+
+                    <th name="Площадь"
+                        data-editable="true"
+                        data-input-order="1">Площадь ЗБМ</th>
                 </tr>
                 </thead>
                 <tbody>
