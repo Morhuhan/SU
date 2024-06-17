@@ -4,23 +4,63 @@
     <meta charset="UTF-8">
     <title>Управление Весами</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            var mainTable = document.getElementById('mainTable');
+            var invoiceSelect = document.getElementById('invoiceSelect');
+            FillSearchSelectOptions(invoiceSelect, mainTable);
+
+            var UEMenu_table = document.getElementById('UEMenu_table');
+            var UESelect = document.getElementById('UESelect');
+            FillSearchSelectOptions(UESelect, UEMenu_table);
+
+            AddSortingToTableHeaders(UEMenu_table);
+
+            // Функция для добавления слушателей на строки таблицы
+            function addRowListeners(rows) {
+                Array.prototype.forEach.call(rows, function(row) {
+                    row.addEventListener('click', function() {
+                        if (row.classList.contains('selected')) {
+                            InvoiceRowClick(row);
+                        }
+                    });
+                });
+            }
+
+            // Добавляем слушатель на существующие строки таблицы
+            addRowListeners(mainTable.getElementsByTagName('tr'));
+
+            // Используем MutationObserver для отслеживания добавления новых строк
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Добавляем слушатели только к новым строкам
+                        addRowListeners(mutation.addedNodes);
+                    }
+                });
+            });
+
+            observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+
+        });
     </script>
 
-    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
-    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 </head>
 <body>
 <header>
-    <img id="img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
     <div>
         <label for="itemsPerPage">Строк на странице:</label>
-        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+        <select id="itemsPerPage" onchange="GetPageFromTable(1);">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -28,6 +68,7 @@
             <option value="100" selected>100</option>
         </select>
     </div>
+
 </header>
 
 <div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
@@ -40,80 +81,42 @@
 </div>
 
 <div class="container_main">
-    <div class="container_formsMenu">
-        <div class="formsMenu">
+    <div class="container_nav_table_search">
+
+        <div class="container_nav_invoiceCreateButton">
+            <!-- Место под панель навигации -->
+            <div id="navigationPanel"></div>
+
             <div class="container_buttons">
-                <button class="greenButton" type="button" onclick="setupFormToggle('deleteForm')">Удалить</button>
-                <button class="greenButton" type="button" onclick="setupFormToggle('editForm')">Изменить</button>
-                <button class="greenButton" type="button" onclick="setupFormToggle('createForm')">Создать</button>
+                <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
+                <button class="greenButton" type="button" onclick="ModalCreateInvoice()">Изменить</button>
+                <button class="redButton" type="button" onclick="ModalCreateInvoice()">Удалить</button>
             </div>
+        </div>
 
-            <div id="forms">
-                <!-- Форма создания для ZBM -->
-                <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                    <h1>Создание ЗБМ</h1>
-                    <label for="create_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="create_zbmNumber"
-                           name="Номер_ЗБМ"
-                           placeholder="Введите номер ЗБМ для создания">
+        <div class="container_table">
+            <table id="mainTable" class="table" name="Зона_баланса_материалов">
+                <thead>
+                <tr>
+                    <th name="Номер_ЗБМ">Номер ЗБМ</th>
+                    <th name="Площадь">Площадь ЗБМ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Здесь будет динамически заполняться таблица -->
+                </tbody>
+            </table>
+        </div>
 
-                    <label for="create_area">Площадь:</label>
-                    <input type="text"
-                           id="create_area"
-                           name="Площадь">
-                    <button class="greenButton" type="submit">Отправить</button>
-                </form>
-
-                <!-- Форма изменения для ZBM -->
-                <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                    <h1>Изменение ЗБМ</h1>
-                    <label for="edit_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="edit_zbmNumber"
-                           data-edit-field="Номер_ЗБМ"
-                           name="Номер_ЗБМ"
-                           placeholder="Введите номер ЗБМ для изменения">
-
-                    <label for="edit_area">Площадь:</label>
-                    <input type="text"
-                           id="edit_area"
-                           data-edit-field="Площадь"
-                           name="Площадь">
-                    <button class="greenButton" type="submit">Отправить</button>
-                </form>
-
-                <!-- Форма удаления для ZBM -->
-                <form id="deleteForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                    <h1>Удаление ЗБМ</h1>
-                    <label for="delete_zbmNumber">Номер ЗБМ:</label>
-                    <input type="text"
-                           id="delete_zbmNumber"
-                           data-delete-field="Номер_ЗБМ"
-                           name="Номер_ЗБМ"
-                           placeholder="Введите номер ЗБМ для удаления">
-                    <button class="redButton" type="submit">Отправить</button>
-                </form>
-            </div>
+        <div class="container_searchBar">
+            <select id="invoiceSelect">
+            </select>
+            <input type="text"  id="invoiceSearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(invoiceSelect, mainTable, invoiceSearchInput)">
         </div>
     </div>
 
-    <div>
-        <!-- Место под панель навигации -->
-        <div id="navigationPanel"></div>
-
-        <table id="mainTable" class="table" name="Зона_баланса_материалов">
-            <thead>
-            <tr>
-                <th name="Номер_ЗБМ">Номер ЗБМ</th>
-                <th name="Площадь">Площадь</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Здесь будет динамически заполняться таблица -->
-            </tbody>
-        </table>
-    </div>
 </div>
+
+
 </body>
 </html>

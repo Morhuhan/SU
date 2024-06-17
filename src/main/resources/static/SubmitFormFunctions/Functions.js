@@ -173,181 +173,6 @@ function GetExpandedData(cell, header) {
     });
 }
 
-function SubmitCreateForm(event) {
-    event.preventDefault();
-
-    var form = document.getElementById('createForm');
-    var inputs = form.getElementsByTagName('input');
-
-    var objectData = {};
-    var mainTable = document.getElementById('mainTable');
-    var tableName = mainTable.getAttribute('name');
-
-    for (var i = 0; i < inputs.length; i++) {
-        objectData[inputs[i].name] = inputs[i].value;
-    }
-
-    var jsonData = JSON.stringify(objectData);
-    var url = '/addData/' + encodeURIComponent(tableName);
-
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: jsonData
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.error);
-            });
-        }
-        GetPageFromTable(currentPage);
-    })
-    .catch(error => {
-        alert(error.message);
-        console.error('There has been a problem with your fetch operation:', error);
-    });
-}
-
-function EditButtonClick(table) {
-    // Найти строку с классом selected
-    const selectedRow = table.querySelector('tr.selected');
-    if (!selectedRow) {
-        console.error('No row selected');
-        return;
-    }
-
-    // Получить заголовки таблицы (th)
-    const headers = table.querySelectorAll('th');
-    if (headers.length === 0) {
-        console.error('No headers found');
-        return;
-    }
-
-    // Получить имя таблицы из атрибута name
-    const tableName = table.getAttribute('name');
-    if (!tableName) {
-        console.error('Table name attribute is missing');
-        return;
-    }
-
-    // Создание модального окна
-    const { modal, submitButton, editRow } = CreateModalEdit(headers, selectedRow);
-
-    // Обработка кнопки отправить
-    submitButton.onclick = function() {
-        const jsonData = {};
-        headers.forEach((header, index) => {
-            const key = header.getAttribute('name');
-            if (key) {
-                const cell = editRow.cells[index];
-                if (cell) {
-                    jsonData[key] = cell.textContent;
-                }
-            }
-        });
-
-        // Подтверждение изменений
-        const userConfirmed = confirm("Вы уверены, что хотите изменить выбранную строку?");
-        if (!userConfirmed) {
-            return;
-        }
-
-        const url = `/editData/${encodeURIComponent(tableName)}`;
-        fetch(url, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(jsonData)
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('Data edited successfully');
-                modal.style.display = 'none';
-                document.body.removeChild(modal);
-            } else {
-                return response.json().then(errData => {
-                    throw new Error(errData.error || 'Failed to edit data');
-                });
-            }
-        })
-        .catch(error => {
-            alert(error.message);
-        });
-    };
-}
-
-function CreateModalEdit(headers, selectedRow) {
-    // Создание модального окна
-    const modal = document.createElement('div');
-    modal.classList.add('modal');
-    modal.id = 'editModal';
-
-    const modalContent = document.createElement('div');
-    modalContent.classList.add('modal-content');
-
-    const closeButton = document.createElement('span');
-    closeButton.classList.add('close-button');
-    closeButton.innerHTML = '&times;';
-    modalContent.appendChild(closeButton);
-
-    const editTable = document.createElement('table');
-    editTable.id = 'editTable';
-
-    const editTableHead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    headers.forEach(header => {
-        const th = document.createElement('th');
-        th.textContent = header.textContent;
-        headerRow.appendChild(th);
-    });
-    editTableHead.appendChild(headerRow);
-    editTable.appendChild(editTableHead);
-
-    const editTableBody = document.createElement('tbody');
-    const editRow = document.createElement('tr');
-
-    // Преобразование HTMLCollection в массив
-    Array.from(selectedRow.cells).forEach(cell => {
-        const td = document.createElement('td');
-        td.textContent = cell.getAttribute('data-value') !== null ? cell.getAttribute('data-value') : cell.textContent;
-        td.contentEditable = true; // Сделать ячейки редактируемыми
-        editRow.appendChild(td);
-    });
-    editTableBody.appendChild(editRow);
-    editTable.appendChild(editTableBody);
-
-    modalContent.appendChild(editTable);
-
-    const submitButton = document.createElement('button');
-    submitButton.id = 'submitChanges';
-    submitButton.textContent = 'Отправить';
-    modalContent.appendChild(submitButton);
-
-    modal.appendChild(modalContent);
-    document.body.appendChild(modal);
-
-    // Показать модальное окно
-    modal.style.display = 'block';
-
-    CreateOverlay(modal);
-
-    // Закрытие модального окна
-    closeButton.onclick = CloseModal(modal);
-
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            document.body.removeChild(modal);
-        }
-    }
-
-    return { modal, submitButton, editRow };
-}
-
 function UpdateNavigationPanel() {
     var itemsPerPage = parseInt(document.getElementById('itemsPerPage').value);
     var navigationPanel = document.getElementById('navigationPanel');
@@ -637,6 +462,9 @@ function DataSourceModalRowClick(element, row, modal) {
     // Получаем значение атрибута data-name для input элемента
     var dataName = element.getAttribute('name');
 
+    // Получаем значение атрибута data-extended для input элемента
+    var dataExtended = element.getAttribute('data-extended');
+
     // Находим все заголовки в таблице
     var headers = row.closest('table').querySelectorAll('th');
 
@@ -648,19 +476,52 @@ function DataSourceModalRowClick(element, row, modal) {
         // Находим ячейку в строке по индексу заголовка
         var selectedCell = row.cells[columnIndex];
 
-        // Вставляем текст из ячейки в input элемент
-        element.value = selectedCell.textContent;
-
-        // Ручной вызов события change после программного изменения значения
-        const event = new Event('change');
-        element.dispatchEvent(event);
-
-        // Вызываем функцию CloseModal с переданным элементом modal
-        CloseModal(modal);
+        // Вставляем текст из ячейки в скрытое поле data-hidden
+        element.setAttribute('data-hidden', selectedCell.textContent);
     } else {
         // Если ячейка не найдена, выводим сообщение об ошибке
         console.error('No matching header found for data-name');
+        return;
     }
+
+    // Разделяем значение data-extended на отдельные имена заголовков
+    var extendedHeaders = dataExtended.split(',').map(header => header.trim());
+
+    var combinedData = extendedHeaders.map(headerName => {
+        // Определяем индекс заголовка, который соответствует headerName
+        var headerIndex = Array.from(headers).findIndex(header => header.textContent.trim() === headerName);
+
+        // Проверяем, что индекс найден
+        if (headerIndex !== -1) {
+            // Находим ячейку в строке по индексу заголовка
+            var cell = row.cells[headerIndex];
+            return cell.textContent;
+        } else {
+            console.error(`No matching header found for extended data: ${headerName}`);
+            return '';
+        }
+    }).join(' ');
+
+    // Проверяем тип input элемента
+    if (element.type === 'number') {
+        // Если тип number, пытаемся преобразовать combinedData в число
+        const numericValue = parseFloat(combinedData);
+        if (!isNaN(numericValue)) {
+            element.value = numericValue;
+        } else {
+            console.error('Combined data is not a valid number:', combinedData);
+        }
+    } else {
+        // Если тип не number, вставляем комбинированные данные как есть
+        element.value = combinedData;
+    }
+
+    // Ручной вызов события change после программного изменения значения
+    const event = new Event('change');
+    element.dispatchEvent(event);
+
+    // Вызываем функцию CloseModal с переданным элементом modal
+    CloseModal(modal);
 }
 
 function CreateOverlay(modal) {
@@ -870,6 +731,108 @@ function MakeSearch(selectElement, table, input) {
     });
 }
 
+/////////////////////// УДАЛЕНИЕ/ИЗМЕНЕНИЕ/СОЗДАНИЕ
+
+function CreateRowModal(table) {
+    // Создаем окно
+    const modal = document.createElement('div');
+    modal.id = 'modalCreateRow';
+    modal.setAttribute('class', 'modal');
+    document.body.appendChild(modal);
+
+    // Создаем оверлей
+    CreateOverlay(modal);
+
+    // Получаем заголовки таблицы
+    const headers = table.querySelectorAll('thead th');
+
+    // Проходим по каждому заголовку и создаем соответствующие элементы
+    headers.forEach(header => {
+        const label = document.createElement('label');
+        label.textContent = header.textContent + ': ';
+        label.htmlFor = header.getAttribute('name');
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = header.getAttribute('name');
+        input.setAttribute('name', header.getAttribute('name'));
+
+        modal.appendChild(label);
+        modal.appendChild(input);
+    });
+
+    // Создаем контейнер для кнопок
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.setAttribute('class', 'container_buttons');
+
+    // Создаем кнопку ОК
+    const okButton = document.createElement('button');
+    okButton.textContent = 'Создать';
+    okButton.className = 'greenButton';
+    okButton.addEventListener('click', function() {
+        CreateRowModalSubmit(modal, table);
+    });
+
+    // Создаем кнопку закрыть
+    const closeButton = document.createElement('button');
+    closeButton.setAttribute('class', 'redButton');
+    closeButton.textContent = 'Закрыть';
+    closeButton.addEventListener('click', function() {
+        CloseModal(modal);
+    });
+
+    buttonsContainer.appendChild(closeButton);
+    buttonsContainer.appendChild(okButton);
+
+    // Добавляем контейнер с кнопками в модальное окно
+    modal.appendChild(buttonsContainer);
+}
+
+function CreateRowModalSubmit(modal, table) {
+    const inputs = modal.querySelectorAll('input');
+    const dataForServer = {};
+
+    // Считываем значения всех инпутов
+    inputs.forEach(input => {
+        if (input.type !== 'radio' && !input.disabled) {
+            const hiddenValue = input.getAttribute('data-hidden');
+            dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+        }
+    });
+
+    // Зашифровываем название таблицы из атрибута name
+    const tableName = table.getAttribute('name');
+    const encodedTableName = encodeURIComponent(tableName);
+
+    // Отправляем fetch запрос
+    fetch(`/addData/${encodedTableName}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataForServer)
+    })
+    .then(response => {
+        // Проверяем статус ответа
+        if (!response.ok) {
+            return response.json().then(errorBody => {
+                throw new Error(errorBody.error);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        // Вызов функции для обновления страницы таблицы после успешного запроса
+        GetPageFromTable(currentPage);
+        CloseModal(modal);
+    })
+    .catch(error => {
+        alert(error.message);
+        console.error('There has been a problem with your fetch operation:', error);
+    });
+}
+
 /////////////////////// СОЗДАНИЕ НАКЛАДНОЙ
 
 function ModalCreateInvoice() {
@@ -885,7 +848,7 @@ function ModalCreateInvoice() {
 
     // Создаем и добавляем поля ввода для сотрудника
     const employeeInput = document.createElement('input');
-    employeeInput.type = 'number';
+    employeeInput.type = 'text';
     employeeInput.id = 'Номер_сотрудника';
     employeeInput.placeholder = 'Подписавший сотрудник';
     employeeInput.setAttribute('name', 'Номер_сотрудника');
@@ -893,6 +856,7 @@ function ModalCreateInvoice() {
     employeeInput.setAttribute('autocomplete', 'off');
     employeeInput.setAttribute('readonly', true);
     employeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+    employeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
     employeeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
@@ -1025,6 +989,9 @@ function ModalCreateAct(invoiceType) {
     representativeInput.setAttribute('name', 'Номер_представителя');
     representativeInput.setAttribute('data-source', 'Представитель');
     representativeInput.setAttribute('autocomplete', 'off');
+    representativeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+
+
     representativeInput.setAttribute('data-columns-order', 'Номер_представителя, Имя, Фамилия, Отчество');
     representativeInput.onfocus = function() {
         DataSourceRowClick(this);
@@ -1045,6 +1012,8 @@ function ModalCreateAct(invoiceType) {
     authorizingEmployeeInput.setAttribute('data-source', 'Сотрудник');
     authorizingEmployeeInput.setAttribute('autocomplete', 'off');
     authorizingEmployeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+    authorizingEmployeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+
     authorizingEmployeeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
@@ -1060,6 +1029,7 @@ function ModalCreateAct(invoiceType) {
     receivingEmployeeInput.setAttribute('data-source', 'Сотрудник');
     receivingEmployeeInput.setAttribute('autocomplete', 'off');
     receivingEmployeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+    receivingEmployeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
     receivingEmployeeInput.onfocus = function() {
         DataSourceRowClick(this);
     };
@@ -1112,10 +1082,10 @@ function ModalCreateAct(invoiceType) {
 }
 
 function SubmitActClick(modal) {
-
     // Шаг 1: Получаем значения по id и отправляем fetch запрос
     const invoiceDateValue = document.getElementById('Дата_подписания').value;
-    const invoiceEmployeeNumberValue = document.getElementById('Номер_сотрудника').value;
+    const invoiceEmployeeNumberElement = document.getElementById('Номер_сотрудника');
+    const invoiceEmployeeNumberValue = invoiceEmployeeNumberElement.getAttribute('data-hidden') || invoiceEmployeeNumberElement.value;
 
     const dataForInvoice = {
         "Дата_подписания": invoiceDateValue,
@@ -1145,7 +1115,9 @@ function SubmitActClick(modal) {
 
             inputs.forEach(input => {
                 if (input.type !== 'radio' && !input.disabled) {
-                    dataForModal[input.id] = input.value;
+                    // Проверяем наличие атрибута data-hidden
+                    const hiddenValue = input.getAttribute('data-hidden');
+                    dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
                 }
             });
 

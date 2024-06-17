@@ -116,7 +116,6 @@ header {
 
 .table  {
     width: 100%;
-    margin-top: 10px;
     border-collapse: collapse;
     border: 1px solid black;
 }
@@ -244,16 +243,22 @@ button:hover {
 }
 
 .modal {
+    width: auto;
+    height: auto;
+    gap: 20px;
+    display: flex;
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80%;
     background-color: white;
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+    overflow-y: auto;
     z-index: 9999;
+    flex-direction: column;
 }
 
 #modalDataSource  {
@@ -432,3 +437,7 @@ button:hover {
 #UEContainer1 .container_searchBar input {
     width: 350px;
 }
+
+/* создание/удаление/изменение */
+
+
