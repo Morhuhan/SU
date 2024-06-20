@@ -76,14 +76,38 @@
 
 </header>
 
-<div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
+<div class="menu" onmouseover="toggleMenu(true)" onmouseout="toggleMenu(false)">
     <ul>
-        <li><a href="/invoice">Накладные</a></li>
-        <li><a href="/building">Здания</a></li>
-        <li><a href="/room">Помещения</a></li>
-        <li><a href="/ZBM">ЗБМ</a></li>
+        <li><a class="menu-item" href="/invoice">Накладные</a></li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Адреса</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/ZBM">ЗБМ</a></li>
+                <li><a class="menu-item" href="/building">Здания</a></li>
+                <li><a class="menu-item" href="/room">Помещения</a></li>
+            </ul>
+        </li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Персонал</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/employee">Сотрудники</a></li>
+                <li><a class="menu-item" href="/position">Должности</a></li>
+                <li><a class="menu-item" href="/power">Полномочия</a></li>
+                <li><a class="menu-item" href="/representative">Представители</a></li>
+            </ul>
+        </li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Материалы</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/materialtype">Типы материалов</a></li>
+                <li><a class="menu-item" href="/container">Контейнеры</a></li>
+                <li><a class="menu-item" href="/сriticallimit">Критические пределы</a></li>
+            </ul>
+        </li>
+        <li><a class="menu-item" href="/partner">Партнеры</a></li>
     </ul>
 </div>
+
 
 <div class="container_main">
     <div class="container_nav_table_search">

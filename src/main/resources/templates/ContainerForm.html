@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Управление Сотрудниками</title>
+    <title>Управление Контейнерами</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
@@ -55,7 +55,7 @@
 </head>
 <body>
 <header>
-    <div hidden id="pageName"> Сотрудника </div>
+    <div hidden id="pageName"> Контейнера </div>
 
     <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
@@ -71,7 +71,7 @@
         </select>
     </div>
 
-    <h1> Управление Сотрудниками </h1>
+    <h1> Управление Контейнерами </h1>
 </header>
 
 <div class="menu" onmouseover="toggleMenu(true)" onmouseout="toggleMenu(false)">
@@ -122,59 +122,32 @@
         </div>
 
         <div class="container_table">
-            <table id="mainTable" class="table" name="Сотрудник">
+            <table id="mainTable" class="table" name="Контейнер">
                 <thead>
                 <tr>
-                    <th name="Номер_сотрудника"
+                    <th name="Номер_контейнера"
                         data-editable="false"
-                        data-input-order="0">Номер представителя</th>
+                        data-input-order="0">Номер контейнера</th>
 
-                    <th name="Начальник"
-                        data-expanded-source="Сотрудник"
-                        data-expanded-columns="Номер_сотрудника, Фамилия, Имя, Отчество, Номер_телефона"
-                        data-expanded-prefix="Номер: *, * * *, Телефон: *"
+                    <th name="Допустимый_вес"
                         data-editable="true"
-                        data-input-order="1">
-                        Начальник
-                    </th>
+                        data-input-order="1">Допустимый вес</th>
 
-                    <th name="Номер_должности"
-                        data-expanded-source="Должность"
-                        data-expanded-columns="Номер_должности, Название_должности"
-                        data-expanded-prefix="Номер: *, *"
+                    <th name="Допустимый_объем"
                         data-editable="true"
-                        data-input-order="2">
-                        Должность
-                    </th>
+                        data-input-order="2">Допустимый объем</th>
 
-                    <th name="Фамилия"
+                    <th name="Масса_контейнера"
                         data-editable="true"
-                        data-input-order="3">Фамилия"</th>
+                        data-input-order="3">Масса контейнера</th>
 
-                    <th name="Имя"
+                    <th name="Диаметр"
                         data-editable="true"
-                        data-input-order="4">Имя"</th>
+                        data-input-order="4">Диаметр контейнера</th>
 
-                    <th name="Отчество"
+                    <th name="Высота"
                         data-editable="true"
-                        data-input-order="5">Отчество</th>
-
-                    <th name="Пол"
-                        data-editable="true"
-                        data-input-order="6">Пол</th>
-
-                    <th name="Дата_рождения"
-                        data-editable="true"
-                        data-input-order="7">Дата рождения</th>
-
-                    <th name="Адрес"
-                        data-editable="true"
-                        data-input-order="8">Адрес</th>
-
-                    <th name="Номер_паспорта"
-                        data-editable="true"
-                        data-input-order="9">Номер паспорта</th>
-
+                        data-input-order="5">Высота контейнера</th>
                 </tr>
                 </thead>
                 <tbody>

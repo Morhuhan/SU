@@ -4,24 +4,65 @@
     <meta charset="UTF-8">
     <title>Управление Весами</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
+    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            var mainTable = document.getElementById('mainTable');
+            var invoiceSelect = document.getElementById('invoiceSelect');
+            FillSearchSelectOptions(invoiceSelect, mainTable);
+
+            var UEMenu_table = document.getElementById('UEMenu_table');
+            var UESelect = document.getElementById('UESelect');
+            FillSearchSelectOptions(UESelect, UEMenu_table);
+
+            AddSortingToTableHeaders(UEMenu_table);
+
+            // Функция для добавления слушателей на строки таблицы
+            function addRowListeners(rows) {
+                Array.prototype.forEach.call(rows, function(row) {
+                    row.addEventListener('click', function() {
+                        if (row.classList.contains('selected')) {
+                            InvoiceRowClick(row);
+                        }
+                    });
+                });
+            }
+
+            // Добавляем слушатель на существующие строки таблицы
+            addRowListeners(mainTable.getElementsByTagName('tr'));
+
+            // Используем MutationObserver для отслеживания добавления новых строк
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        // Добавляем слушатели только к новым строкам
+                        addRowListeners(mutation.addedNodes);
+                    }
+                });
+            });
+
+            observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+
+        });
     </script>
 
-    <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
-    <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
-    <script th:inline="javascript" src="Utility/ScalesUtility.js"></script>
 </head>
 <body>
 <header>
-    <img id = "img1" src="css/burger.png" class="toggle-submenu" onclick="toggleMenu()">
+    <div hidden id="pageName"> Весов </div>
+
+    <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
     <!-- Выбор количества строк на странице -->
     <div>
         <label for="itemsPerPage">Строк на странице:</label>
-        <select id="itemsPerPage" onchange="UpdateNavigationPanel(); GetPageFromTable(currentPage);">
+        <select id="itemsPerPage" onchange="GetPageFromTable(1);">
             <option value="5">5</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -29,114 +70,97 @@
             <option value="100" selected>100</option>
         </select>
     </div>
+
+    <h1> Управление Весами </h1>
 </header>
 
-<div id="submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
+<div class="menu" onmouseover="toggleMenu(true)" onmouseout="toggleMenu(false)">
     <ul>
-        <li><a href="/building">Здания</a></li>
-        <li><a href="/room">Помещения</a></li>
-        <li><a href="/ZBM">ЗБМ</a></li>
-        <li><a href="/Scales">Весы</a></li>
+        <li><a class="menu-item" href="/invoice">Накладные</a></li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Адреса</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/ZBM">ЗБМ</a></li>
+                <li><a class="menu-item" href="/building">Здания</a></li>
+                <li><a class="menu-item" href="/room">Помещения</a></li>
+            </ul>
+        </li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Персонал</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/employee">Сотрудники</a></li>
+                <li><a class="menu-item" href="/position">Должности</a></li>
+                <li><a class="menu-item" href="/power">Полномочия</a></li>
+                <li><a class="menu-item" href="/representative">Представители</a></li>
+            </ul>
+        </li>
+        <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+            <div class="menu-item">Материалы</div>
+            <ul class="submenu">
+                <li><a class="menu-item" href="/materialtype">Типы материалов</a></li>
+                <li><a class="menu-item" href="/container">Контейнеры</a></li>
+                <li><a class="menu-item" href="/сriticallimit">Критические пределы</a></li>
+            </ul>
+        </li>
+        <li><a class="menu-item" href="/partner">Партнеры</a></li>
     </ul>
 </div>
 
-<div id="container1">
-    <div id="container2">
-        <div id="input">
-            <button type="button" onclick="ShowDeleteForm()">Удалить</button>
-            <button type="button" onclick="ShowEditForm()">Изменить</button>
-            <button type="button" onclick="ShowCreateForm()">Создать</button>
+
+<div class="container_main">
+    <div class="container_nav_table_search">
+
+        <div class="container_nav_invoiceCreateButton">
+            <!-- Место под панель навигации -->
+            <div id="navigationPanel"></div>
+
+            <div class="container_buttons">
+                <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
+                <button class="greenButton" type="button" onclick="EditRowModal(mainTable)">Изменить</button>
+                <button class="redButton" type="button" onclick="DeleteSelectedRow(mainTable)">Удалить</button>
+            </div>
         </div>
 
-        <div id="forms">
-            <!-- Форма создания для Накладная -->
-            <form id="createForm" onsubmit="SubmitCreateForm(event); return false;" method="post">
-                <h1>Создание Накладной</h1>
-                <label for="create_signDate">Дата подписания:</label>
-                <input type="text"
-                       id="create_signDate"
-                       name="Дата_подписания"
-                       placeholder="Введите дату подписания">
+        <div class="container_table">
+            <table id="mainTable" class="table" name="Весы">
+                <thead>
+                <tr>
+                    <th name="Инвентарный_номер_весов"
+                        data-editable="false"
+                        data-input-order="0">Инвентарный номер</th>
 
-                <label for="create_waybillNumber">Номер накладной:</label>
-                <input type="text"
-                       id="create_waybillNumber"
-                       name="Номер_накладной"
-                       placeholder="Введите номер накладной">
+                    <th name="Модель"
+                        data-editable="true"
+                        data-input-order="1">Модель</th>
 
-                <label for="create_employeeNumber">Номер сотрудника:</label>
-                <input type="text"
-                       id="create_employeeNumber"
-                       name="Номер_сотрудника"
-                       placeholder="Введите номер сотрудника">
-                <button type="submit">Отправить</button>
-            </form>
+                    <th name="Дата_калибровки"
+                        data-editable="true"
+                        data-input-order="2">Дата калибровки</th>
 
-            <!-- Форма изменения для Накладная -->
-            <form id="editForm" onsubmit="SubmitEditForm(event); return false;" method="post" style="display: none;">
-                <h1>Изменение Накладной</h1>
-                <label for="edit_signDate">Дата подписания:</label>
-                <input type="text"
-                       id="edit_signDate"
-                       name="Дата_подписания">
+                    <th name="Предел_измерений"
+                        data-editable="true"
+                        data-input-order="3">Предел измерений</th>
 
-                <label for="edit_waybillNumber">Номер накладной:</label>
-                <input type="text"
-                       id="edit_waybillNumber"
-                       name="Номер_накладной">
+                    <th name="Погрешность"
+                        data-editable="true"
+                        data-input-order="4">Погрешность</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Здесь будет динамически заполняться таблица -->
+                </tbody>
+            </table>
+        </div>
 
-                <label for="edit_employeeNumber">Номер сотрудника:</label>
-                <input type="text"
-                       id="edit_employeeNumber"
-                       name="Номер_сотрудника">
-                <button type="submit">Отправить</button>
-            </form>
-
-            <!-- Форма удаления для Накладная -->
-            <form id="deleteWaybillForm" onsubmit="SubmitDeleteForm(event); return false;" method="post" style="display: none;">
-                <h1>Удаление Накладной</h1>
-                <label for="delete_signDate">Дата подписания:</label>
-                <input type="text"
-                       id="delete_signDate"
-                       name="Дата_подписания"
-                       placeholder="Введите дату подписания для удаления">
-
-                <label for="delete_waybillNumber">Номер накладной:</label>
-                <input type="text"
-                       id="delete_waybillNumber"
-                       name="Номер_накладной"
-                       placeholder="Введите номер накладной для удаления">
-
-                <label for="delete_employeeNumber">Номер сотрудника:</label>
-                <input type="text"
-                       id="delete_employeeNumber"
-                       name="Номер_сотрудника"
-                       placeholder="Введите номер сотрудника для удаления">
-                <button type="submit">Отправить</button>
-            </form>
+        <div class="container_searchBar">
+            <select id="invoiceSelect">
+            </select>
+            <input type="text"  id="invoiceSearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(invoiceSelect, mainTable, invoiceSearchInput)">
         </div>
     </div>
 
-    <div>
-
-        <!-- Место под панель навигации -->
-        <div id="navigationPanel"></div>
-
-        <table id="table" class="mainTable" name="Весы">
-            <thead>
-            <tr>
-                <th name="Инвентарный_номер_весов">Инвентарный номер</th>
-                <th name="Модель">Модель</th>
-                <th name="Дата_калибровки">Дата калибровки</th>
-                <th name="Предел_измерений">Предел измерения</th>
-                <th name="Погрешность">Погрешность</th>
-            </tr>
-            </thead>
-            <tbody>
-            <!-- Здесь будет динамически заполняться таблица -->
-            </tbody>
-        </table>
-    </div>
 </div>
+
+
 </body>
 </html>

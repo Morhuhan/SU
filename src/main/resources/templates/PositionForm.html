@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
-    <title>Управление Сотрудниками</title>
+    <title>Управление Должностями</title>
     <link rel="stylesheet" type="text/css" href="css/form.css">
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
@@ -55,7 +55,7 @@
 </head>
 <body>
 <header>
-    <div hidden id="pageName"> Сотрудника </div>
+    <div hidden id="pageName"> Должности </div>
 
     <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
 
@@ -71,7 +71,7 @@
         </select>
     </div>
 
-    <h1> Управление Сотрудниками </h1>
+    <h1> Управление Должностями </h1>
 </header>
 
 <div class="menu" onmouseover="toggleMenu(true)" onmouseout="toggleMenu(false)">
@@ -122,59 +122,20 @@
         </div>
 
         <div class="container_table">
-            <table id="mainTable" class="table" name="Сотрудник">
+            <table id="mainTable" class="table" name="Должность">
                 <thead>
                 <tr>
-                    <th name="Номер_сотрудника"
-                        data-editable="false"
-                        data-input-order="0">Номер представителя</th>
-
-                    <th name="Начальник"
-                        data-expanded-source="Сотрудник"
-                        data-expanded-columns="Номер_сотрудника, Фамилия, Имя, Отчество, Номер_телефона"
-                        data-expanded-prefix="Номер: *, * * *, Телефон: *"
-                        data-editable="true"
-                        data-input-order="1">
-                        Начальник
-                    </th>
-
                     <th name="Номер_должности"
-                        data-expanded-source="Должность"
-                        data-expanded-columns="Номер_должности, Название_должности"
-                        data-expanded-prefix="Номер: *, *"
-                        data-editable="true"
-                        data-input-order="2">
-                        Должность
-                    </th>
+                        data-editable="false"
+                        data-input-order="0">Номер должности</th>
 
-                    <th name="Фамилия"
+                    <th name="Название_должности"
                         data-editable="true"
-                        data-input-order="3">Фамилия"</th>
+                        data-input-order="1">Название должности</th>
 
-                    <th name="Имя"
+                    <th name="Номер_полномочия"
                         data-editable="true"
-                        data-input-order="4">Имя"</th>
-
-                    <th name="Отчество"
-                        data-editable="true"
-                        data-input-order="5">Отчество</th>
-
-                    <th name="Пол"
-                        data-editable="true"
-                        data-input-order="6">Пол</th>
-
-                    <th name="Дата_рождения"
-                        data-editable="true"
-                        data-input-order="7">Дата рождения</th>
-
-                    <th name="Адрес"
-                        data-editable="true"
-                        data-input-order="8">Адрес</th>
-
-                    <th name="Номер_паспорта"
-                        data-editable="true"
-                        data-input-order="9">Номер паспорта</th>
-
+                        data-input-order="2">Номер полномочия</th>
                 </tr>
                 </thead>
                 <tbody>

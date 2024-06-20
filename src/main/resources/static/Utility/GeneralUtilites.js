@@ -1,23 +1,11 @@
-function toggleMenu(display) {
-    var submenu = document.getElementById("submenu");
-    submenu.style.display = display;
+function toggleMenu(visible) {
+    var menu = document.querySelector(".menu");
+    menu.style.visibility = visible ? 'visible' : 'hidden';
 }
 
-function setupFormToggle(formId) {
-    var forms = document.querySelectorAll('#forms form');
-    forms.forEach(function(form) {
-        form.style.display = 'none';
-    });
-    document.getElementById(formId).style.display = 'block';
+function toggleSubMenu(element, visible) {
+    var submenu = element.querySelector(".submenu");
+    if (submenu) {
+        submenu.style.visibility = visible ? 'visible' : 'hidden';
+    }
 }
-
-
-
-
-
-
-
-
-
-
-

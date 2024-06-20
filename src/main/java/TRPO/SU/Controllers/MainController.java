@@ -43,4 +43,24 @@ public class MainController {
         return "InvoiceForm.html";
     }
 
+    @GetMapping("/position")
+    public String showPosition(Model model) { return "PositionForm.html"; };
+
+    @GetMapping("/container")
+    public String showContainer (Model model) { return "ContainerForm.html"; };
+
+    @GetMapping("/сriticallimit")
+    public String showСriticallimit (Model model) { return "CriticallimitForm.html"; };
+
+    @GetMapping("/materialtype")
+    public String showmaterialType (Model model) { return "MaterialtypeForm.html"; };
+
+    @GetMapping("/power")
+    public String showpower (Model model) { return "PowersForm.html"; };
+
+    @GetMapping("/partner")
+    public String showpartner (Model model) { return "PartnerForm.html"; };
+
+    @GetMapping("/representative")
+    public String showrepresentative (Model model) { return "RepresentativeForm.html"; };
 }

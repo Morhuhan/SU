@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление Партнерами</title>
+  <link rel="stylesheet" type="text/css" href="css/form.css">
+  <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
+  <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
+
+  <!-- Глобальные переменные JS -->
+  <script th:inline="javascript">
+    var currentPage = 1;
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+        var mainTable = document.getElementById('mainTable');
+        var invoiceSelect = document.getElementById('invoiceSelect');
+        FillSearchSelectOptions(invoiceSelect, mainTable);
+
+        var UEMenu_table = document.getElementById('UEMenu_table');
+        var UESelect = document.getElementById('UESelect');
+        FillSearchSelectOptions(UESelect, UEMenu_table);
+
+        AddSortingToTableHeaders(UEMenu_table);
+
+        // Функция для добавления слушателей на строки таблицы
+        function addRowListeners(rows) {
+            Array.prototype.forEach.call(rows, function(row) {
+                row.addEventListener('click', function() {
+                    if (row.classList.contains('selected')) {
+                        InvoiceRowClick(row);
+                    }
+                });
+            });
+        }
+
+        // Добавляем слушатель на существующие строки таблицы
+        addRowListeners(mainTable.getElementsByTagName('tr'));
+
+        // Используем MutationObserver для отслеживания добавления новых строк
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Добавляем слушатели только к новым строкам
+                    addRowListeners(mutation.addedNodes);
+                }
+            });
+        });
+
+        observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+
+    });
+  </script>
+
+</head>
+<body>
+<header>
+  <div hidden id="pageName"> Партнера </div>
+
+  <img id = "img1" src="css/burger.png" class="toggle-submenu" onmouseover="toggleMenu('block')" onmouseout="toggleMenu('none')">
+
+  <!-- Выбор количества строк на странице -->
+  <div>
+    <label for="itemsPerPage">Строк на странице:</label>
+    <select id="itemsPerPage" onchange="GetPageFromTable(1);">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option value="100" selected>100</option>
+    </select>
+  </div>
+
+  <h1> Управление Партенрами</h1>
+</header>
+
+<div class="menu" onmouseover="toggleMenu(true)" onmouseout="toggleMenu(false)">
+  <ul>
+    <li><a class="menu-item" href="/invoice">Накладные</a></li>
+    <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+      <div class="menu-item">Адреса</div>
+      <ul class="submenu">
+        <li><a class="menu-item" href="/ZBM">ЗБМ</a></li>
+        <li><a class="menu-item" href="/building">Здания</a></li>
+        <li><a class="menu-item" href="/room">Помещения</a></li>
+      </ul>
+    </li>
+    <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+      <div class="menu-item">Персонал</div>
+      <ul class="submenu">
+        <li><a class="menu-item" href="/employee">Сотрудники</a></li>
+        <li><a class="menu-item" href="/position">Должности</a></li>
+        <li><a class="menu-item" href="/power">Полномочия</a></li>
+        <li><a class="menu-item" href="/representative">Представители</a></li>
+      </ul>
+    </li>
+    <li class="has-submenu" onmouseover="toggleSubMenu(this, true)" onmouseout="toggleSubMenu(this, false)">
+      <div class="menu-item">Материалы</div>
+      <ul class="submenu">
+        <li><a class="menu-item" href="/materialtype">Типы материалов</a></li>
+        <li><a class="menu-item" href="/container">Контейнеры</a></li>
+        <li><a class="menu-item" href="/сriticallimit">Критические пределы</a></li>
+      </ul>
+    </li>
+    <li><a class="menu-item" href="/partner">Партнеры</a></li>
+  </ul>
+</div>
+
+
+<div class="container_main">
+  <div class="container_nav_table_search">
+
+    <div class="container_nav_invoiceCreateButton">
+      <!-- Место под панель навигации -->
+      <div id="navigationPanel"></div>
+
+      <div class="container_buttons">
+        <button class="greenButton" type="button" onclick="CreateRowModal(mainTable)">Создать</button>
+        <button class="greenButton" type="button" onclick="EditRowModal(mainTable)">Изменить</button>
+        <button class="redButton" type="button" onclick="DeleteSelectedRow(mainTable)">Удалить</button>
+      </div>
+    </div>
+
+    <div class="container_table">
+      <table id="mainTable" class="table" name="Предприятие_партнер">
+        <thead>
+        <tr>
+          <th name="ИНН"
+              data-editable="false"
+              data-input-order="0">ИНН</th>
+
+          <th name="Название_предприятия"
+              data-editable="true"
+              data-input-order="1">Название</th>
+
+          <th name="Адрес_предприятия"
+              data-editable="true"
+              data-input-order="2">Адрес</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Здесь будет динамически заполняться таблица -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="container_searchBar">
+      <select id="invoiceSelect">
+      </select>
+      <input type="text"  id="invoiceSearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(invoiceSelect, mainTable, invoiceSearchInput)">
+    </div>
+  </div>
+
+</div>
+
+
+</body>
+</html>
