@@ -42,6 +42,12 @@ public class MainRestController {
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
+    @PostMapping("/getPowersForEmployee")
+    public ResponseEntity<?> getDataUE(@RequestBody JsonNode jsonNode) {
+        List<String> data = dao.getPowersForEmployee(jsonNode);
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
     @PostMapping("/getAllRecords/{tableName}")
     public ResponseEntity<?> getAllRecords(
             @PathVariable("tableName") String tableName) {
@@ -90,6 +96,13 @@ public class MainRestController {
             @PathVariable("tableName") String tableName,
             @RequestBody JsonNode jsonNode) {
         dao.deleteDataFromTable(tableName, jsonNode);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/checkPowers")
+    public ResponseEntity<?> checkPowers(
+            @RequestBody JsonNode jsonNode) {
+        dao.checkPowers(jsonNode);
         return ResponseEntity.ok().build();
     }
 }

@@ -12,44 +12,51 @@
         var currentPage = 1;
 
         document.addEventListener('DOMContentLoaded', function() {
+        var mainTable = document.getElementById('mainTable');
+        var invoiceSelect = document.getElementById('invoiceSelect');
+        FillSearchSelectOptions(invoiceSelect, mainTable);
 
-            var mainTable = document.getElementById('mainTable');
-            var invoiceSelect = document.getElementById('invoiceSelect');
-            FillSearchSelectOptions(invoiceSelect, mainTable);
+        var UEMenu_table = document.getElementById('UEMenu_table');
+        AddSortingToTableHeaders(UEMenu_table);
 
-            var UEMenu_table = document.getElementById('UEMenu_table');
-            var UESelect = document.getElementById('UESelect');
-            FillSearchSelectOptions(UESelect, UEMenu_table);
-
-            AddSortingToTableHeaders(UEMenu_table);
-
-            // Функция для добавления слушателей на строки таблицы
-            function addRowListeners(rows) {
-                Array.prototype.forEach.call(rows, function(row) {
+        // Функция для добавления слушателей на строки таблицы
+        function addRowListeners(rows) {
+            Array.prototype.forEach.call(rows, function(row) {
+                // Проверяем, если слушатель уже добавлен
+                if (!row.getAttribute('data-listener-added')) {
                     row.addEventListener('click', function() {
                         if (row.classList.contains('selected')) {
-                            InvoiceRowClick(row);
+                            EmployeeRowClick(row);
                         }
                     });
-                });
-            }
-
-            // Добавляем слушатель на существующие строки таблицы
-            addRowListeners(mainTable.getElementsByTagName('tr'));
-
-            // Используем MutationObserver для отслеживания добавления новых строк
-            var observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-                        // Добавляем слушатели только к новым строкам
-                        addRowListeners(mutation.addedNodes);
-                    }
-                });
+                    // Устанавливаем атрибут, сигнализирующий о добавленном слушателе
+                    row.setAttribute('data-listener-added', 'true');
+                }
             });
+        }
 
-            observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+        // Добавляем слушатель на существующие строки таблицы
+        addRowListeners(mainTable.getElementsByTagName('tr'));
 
+        // Используем MutationObserver для отслеживания добавления новых строк
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    var addedRows = [];
+                    mutation.addedNodes.forEach(node => {
+                        if (node.nodeName === 'TR') {
+                            addedRows.push(node);
+                        }
+                    });
+                    // Добавляем слушатели только к новым строкам
+                    addRowListeners(addedRows);
+                }
+            });
         });
+
+        observer.observe(mainTable.getElementsByTagName('tbody')[0], { childList: true });
+    });
+
     </script>
 
 </head>
@@ -127,14 +134,15 @@
                 <tr>
                     <th name="Номер_сотрудника"
                         data-editable="false"
-                        data-input-order="0">Номер представителя</th>
+                        data-autoIncrement="true"
+                        data-input-order="0"> Номер сотрудника</th>
 
                     <th name="Начальник"
                         data-expanded-source="Сотрудник"
-                        data-expanded-columns="Номер_сотрудника, Фамилия, Имя, Отчество, Номер_телефона"
+                        data-expanded-columns="Начальник, Фамилия, Имя, Отчество, Номер_телефона"
                         data-expanded-prefix="Номер: *, * * *, Телефон: *"
                         data-editable="true"
-                        data-input-order="1">
+                        data-canBeNull="true">
                         Начальник
                     </th>
 
@@ -143,37 +151,44 @@
                         data-expanded-columns="Номер_должности, Название_должности"
                         data-expanded-prefix="Номер: *, *"
                         data-editable="true"
-                        data-input-order="2">
+                        data-input-order="1">
                         Должность
                     </th>
 
                     <th name="Фамилия"
                         data-editable="true"
-                        data-input-order="3">Фамилия"</th>
+                        data-input-order="2">Фамилия</th>
 
                     <th name="Имя"
                         data-editable="true"
-                        data-input-order="4">Имя"</th>
+                        data-input-order="3">Имя</th>
 
                     <th name="Отчество"
                         data-editable="true"
-                        data-input-order="5">Отчество</th>
+                        data-input-order="4">Отчество</th>
 
                     <th name="Пол"
                         data-editable="true"
-                        data-input-order="6">Пол</th>
+                        data-input-order="5"
+                        data-variates='["М", "Ж"]'>
+                        Пол
+                    </th>
 
                     <th name="Дата_рождения"
                         data-editable="true"
-                        data-input-order="7">Дата рождения</th>
+                        data-input-order="6">Дата рождения</th>
 
                     <th name="Адрес"
                         data-editable="true"
-                        data-input-order="8">Адрес</th>
+                        data-input-order="7">Адрес</th>
 
                     <th name="Номер_паспорта"
                         data-editable="true"
-                        data-input-order="9">Номер паспорта</th>
+                        data-input-order="8">Номер паспорта</th>
+
+                    <th name="Номер_телефона"
+                        data-editable="true"
+                        data-input-order="9">Номер телефона</th>
 
                 </tr>
                 </thead>
@@ -187,6 +202,48 @@
             <select id="invoiceSelect">
             </select>
             <input type="text"  id="invoiceSearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(invoiceSelect, mainTable, invoiceSearchInput)">
+        </div>
+    </div>
+
+    <div id="employeeMenu">
+        <div id="UEMenu_header">
+            <div> Сотрудник номер </div>
+            <div id="UEMenu_number">
+                <!-- Место для номера накладной -->
+            </div>
+            <div> полномочия: </div>
+        </div>
+
+        <div id="UEMenu_table_container" >
+            <table id="UEMenu_table" class="table" name="Полномочия">
+                <thead>
+                <tr>
+
+                    <th name="Может_подписать_накладную"
+                        data-editable="true"
+                        data-input-order="1">Создать накладную</th>
+
+                    <th name="Может_инициировать_акт_отправки"
+                        data-editable="true"
+                        data-input-order="2">Отправка</th>
+
+                    <th name="Может_санкционировать_акт_перемещ"
+                        data-editable="true"
+                        data-input-order="3">Начать перемещение</th>
+
+                    <th name="Может_завершить_акт_перемещения"
+                        data-editable="true"
+                        data-input-order="4">Принять перемещение</th>
+
+                    <th name="Может_быть_ответственным"
+                        data-editable="true"
+                        data-input-order="5">Ответственный</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Здесь будет динамически заполняться таблица -->
+                </tbody>
+            </table>
         </div>
     </div>
 

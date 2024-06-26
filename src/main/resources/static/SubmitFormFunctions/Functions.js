@@ -24,6 +24,20 @@ function AddRowToTable(jsonRow, table) {
             // Вызываем функцию GetExpandedData для этого столбца
             GetExpandedData(cell, header);
         }
+
+        // Проверяем значения данных и устанавливаем цвет ячейки
+        if (typeof jsonData[jsonFieldName] !== 'undefined') {
+            var item = jsonData[jsonFieldName];
+            if (item === true) {
+                cell.style.backgroundColor = 'green';
+                cell.textContent = '';  // Удаляем textContent если закрашивается зеленым
+            } else if (item === false) {
+                cell.style.backgroundColor = 'red';
+                cell.textContent = '';  // Удаляем textContent если закрашивается красным
+            } else {
+                cell.textContent = item;
+            }
+        }
     });
 
     row.addEventListener('click', TableRowClick);
@@ -84,29 +98,40 @@ function AddSortingToTableHeaders(table) {
 }
 
 function SortTable(table, columnIndex) {
-    var rows, switching, i, x, y, shouldSwitch;
+    var rows, switching, i, x, y, shouldSwitch, xValue, yValue;
     switching = true;
-    // Продолжаем цикл до тех пор, пока не будет выполнено ни одной перестановки
+
     while (switching) {
         switching = false;
         rows = table.getElementsByTagName("TR");
-        // Проходим по всем строкам таблицы, кроме заголовка
+
         for (i = 1; i < (rows.length - 1); i++) {
             shouldSwitch = false;
-            // Получаем сравниваемые элементы
             x = rows[i].getElementsByTagName("TD")[columnIndex];
             y = rows[i + 1].getElementsByTagName("TD")[columnIndex];
-            // Проверяем, являются ли значения числами
-            var xValue = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML);
-            var yValue = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML);
-            // Определяем, должны ли элементы поменяться местами
-            if (xValue > yValue) {
-                shouldSwitch = true;
-                break;
+
+            // Проверяем, есть ли у ячеек стиль backgroundColor
+            if (x.style.backgroundColor && y.style.backgroundColor) {
+                var colorPriority = { "green": 1, "red": 2, "": 3 };
+                xValue = x.style.backgroundColor;
+                yValue = y.style.backgroundColor;
+
+                if (colorPriority[xValue] > colorPriority[yValue]) {
+                    shouldSwitch = true;
+                    break;
+                }
+            } else {
+                xValue = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML);
+                yValue = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML);
+
+                if (xValue > yValue) {
+                    shouldSwitch = true;
+                    break;
+                }
             }
         }
+
         if (shouldSwitch) {
-            // Если элементы должны поменяться местами, выполняем перестановку и помечаем, что была выполнена перестановка
             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
             switching = true;
         }
@@ -157,14 +182,30 @@ function GetExpandedData(cell, header) {
     })
     .then(response => response.json())
     .then(data => {
+        // Проверка на пустой массив
+        if (Array.isArray(data) && data.length === 0) {
+            return;
+        }
+
         // Создаем упорядоченный массив данных
         var orderedData = expandedColumns.map(column => data[column]);
 
         // Форматируем данные с префиксом
         var formattedData = FormatDataWithPrefix(orderedData, expandedPrefix);
 
-        // Устанавливаем отформатированные данные в ячейку
-        cell.innerHTML  = formattedData;
+        // Проверяем значения данных и устанавливаем цвет ячейки
+        orderedData.forEach(function(item) {
+            if (item === true) {
+                cell.style.backgroundColor = 'green';
+                cell.textContent = '';  // Удаляем textContent если закрашивается зеленым
+            } else if (item === false) {
+                cell.style.backgroundColor = 'red';
+                cell.textContent = '';  // Удаляем textContent если закрашивается красным
+            } else {
+                cell.innerHTML = formattedData;
+            }
+        });
+
     })
     .catch(error => {
         console.error('Error fetching expanded data:', error);
@@ -190,7 +231,9 @@ function UpdateNavigationPanel() {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
+            });
         }
         return response.json();
     })
@@ -470,32 +513,132 @@ function MakeSearch(selectElement, table, input) {
 }
 
 function BlockElementInput(element) {
-    // Получаем все дочерние элементы input у element с атрибутом data-input-order
-    const inputs = Array.from(element.querySelectorAll('input[data-input-order]'));
+    // Получаем все input элементы (включая radio), которые имеют атрибут data-input-order, исключая те, у которых data-input-order = null
+    const inputs = Array.from(element.querySelectorAll('input[data-input-order]'))
+        .filter(input => input.getAttribute('data-input-order') !== "null");
 
-    // Сортируем input элементы по dataInputOrder
+    // Сортируем input элементы по data-input-order
     inputs.sort((a, b) => a.getAttribute('data-input-order') - b.getAttribute('data-input-order'));
 
-    // Переменная для отслеживания, должны ли мы разблокировать следующий input
+    // Создаем объект для отслеживания состояния radio-кнопок по группам
+    const radioGroups = {};
+
+    // Флаг для проверки, должны ли мы разблокировать следующий input
     let unlockNext = true;
 
     // Флаг для проверки заполненности всех input элементов
     let allFilled = true;
 
+    // Начинаем с блокировки всех элементов
+    inputs.forEach(input => input.disabled = true);
+
+    // Функция для разблокировки следующего инпута
+    const unlockNextInput = (currentInputOrder) => {
+        const nextInputOrder = currentInputOrder + 1;
+        const nextInput = inputs.find(input => input.getAttribute('data-input-order') == nextInputOrder);
+        if (nextInput) {
+            nextInput.disabled = false;
+        }
+    };
+
     // Идем по всем input элементам
-    for (let input of inputs) {
-        if (input.value) {
-            // Если input уже заполнен, оставляем его разблокированным
-            input.disabled = false;
-        } else if (unlockNext) {
-            // Если мы должны разблокировать следующий input и он не заполнен
-            input.disabled = false;
-            unlockNext = false;
-            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+    for (let i = 0; i < inputs.length; i++) {
+        const input = inputs[i];
+
+        if (input.type === 'radio') {
+            const groupName = input.name;
+
+            // Если группа еще не создана, создаем её
+            if (!radioGroups[groupName]) {
+                radioGroups[groupName] = {
+                    inputs: [],
+                    anyChecked: false,
+                    inputOrder: input.getAttribute('data-input-order') // сохраняем data-input-order группы
+                };
+            }
+
+            // Добавляем радио-кнопку в группу
+            radioGroups[groupName].inputs.push(input);
+
+            // Проверяем, выбрана ли хоть одна радио-кнопка в этой группе
+            if (input.checked) {
+                radioGroups[groupName].anyChecked = true;
+            }
+
+            // Проверяем предыдущий input element, если data-input-order не равен 0
+            const previousInputOrder = parseInt(input.getAttribute('data-input-order'), 10);
+            if (previousInputOrder > 0) {
+                const previousInput = inputs.find(input => input.getAttribute('data-input-order') == previousInputOrder - 1);
+                if (previousInput && previousInput.value) {
+                    // Если предыдущий input заполнен, разблокируем радио-кнопки в группе
+                    radioGroups[groupName].inputs.forEach(radioInput => radioInput.disabled = false);
+                } else {
+                    // Если предыдущий input не заполнен, блокируем радио-кнопки в группе и снимаем выбор
+                    radioGroups[groupName].inputs.forEach(radioInput => {
+                        radioInput.disabled = true;
+                        radioInput.checked = false;
+                    });
+                    radioGroups[groupName].anyChecked = false;
+                }
+            }
+
+            // Добавляем обработчик событий для разблокировки следующего input при выборе радио-кнопки
+            input.addEventListener('change', (event) => {
+                if (event.target.checked) {
+                    unlockNextInput(parseInt(event.target.getAttribute('data-input-order'), 10));
+                }
+            });
+
         } else {
-            // Если мы не должны разблокировать следующий input
-            input.disabled = true;
-            allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+            if (input.value) {
+                // Если input уже заполнен, оставляем его разблокированным
+                input.disabled = false;
+            } else if (unlockNext) {
+                // Если мы должны разблокировать следующий input и он не заполнен
+                input.disabled = false;
+                unlockNext = false;
+                allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+            } else {
+                // Если мы не должны разблокировать следующий input
+                input.disabled = true;
+                allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+            }
+        }
+
+        // Если текущий input заполнен и это не последний элемент,
+        // то разблокируем радио-кнопки с соответствующим порядком
+        if (!input.disabled && unlockNext && i + 1 < inputs.length) {
+            const nextInputOrder = inputs[i + 1].getAttribute('data-input-order');
+
+            // Разблокируем радио-группы с этим порядком
+            for (let groupName in radioGroups) {
+                const group = radioGroups[groupName];
+                if (group.inputOrder === nextInputOrder) {
+                    group.inputs.forEach(radioInput => radioInput.disabled = false);
+                    if (!group.anyChecked) {
+                        unlockNext = false;
+                        allFilled = false; // Устанавливаем флаг, что не все input элементы заполнены
+                    }
+                }
+            }
+
+            // Разблокируем следующий input если он не радиокнопка
+            if (i + 1 < inputs.length && inputs[i + 1].type !== 'radio') {
+                inputs[i + 1].disabled = false;
+            }
+        }
+    }
+
+    // Проходим по всем радио-группам и обрабатываем логику разблокировки
+    for (let groupName in radioGroups) {
+        const group = radioGroups[groupName];
+
+        if (!group.anyChecked && unlockNext) {
+            // Если ни одна радио-кнопка в группе не выбрана, оставляем их все разблокированными
+            group.inputs.forEach(input => input.disabled = false);
+        } else if (group.anyChecked) {
+            // Если хоть одна радио-кнопка в группе выбрана, оставляем их разблокированными
+            group.inputs.forEach(input => input.disabled = false);
         }
     }
 
@@ -506,6 +649,10 @@ function BlockElementInput(element) {
         // Если все input элементы заполнены, активируем кнопку, иначе блокируем
         greenButton.disabled = !allFilled;
     }
+
+    // Убедимся, что все элементы с data-canBeNull не заблокированы
+    const nullableInputs = element.querySelectorAll('input[data-canBeNull]');
+    nullableInputs.forEach(input => input.disabled = false);
 }
 
 /////////////////////// DATASOURCE(NEW)
@@ -698,10 +845,271 @@ function ModalDataSourceRowClick(input, row, table, modal, mainModal) {
 /////////////////////// УДАЛЕНИЕ/ИЗМЕНЕНИЕ/СОЗДАНИЕ
 
 function CreateRowModal(table) {
-    // Получаем значение pageName из элемента с id "pageName"
-    const pageNameElement = document.getElementById('pageName');
-    const pageName = pageNameElement ? pageNameElement.textContent.trim() : 'Неизвестная страница';
+  // Получаем значение pageName из элемента с id "pageName"
+  const pageNameElement = document.getElementById('pageName');
+  let pageName = 'Неизвестная страница';
 
+  if (pageNameElement) {
+    pageName = pageNameElement.textContent.trim();
+
+    // Проверка: Если pageNameElement скрыт (`hidden`) и его текст содержит "Учетной Единицы"
+    if (pageNameElement.hidden && pageName.includes("Учетной Единицы")) {
+
+      // Retrieve UEMenuNumberValue and check it's not empty
+      const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
+      if (UEMenuNumberValue === "") {
+          alert("Сначла выбирите накладную");
+          return; // Stop execution if UEMenuNumberValue is empty
+      }
+
+      // Создаем окно
+      const modal = document.createElement('div');
+      modal.id = 'modalCreateRow';
+      modal.setAttribute('class', 'modal');
+      document.body.appendChild(modal);
+
+      // Создаем оверлей
+      CreateOverlay(modal);
+
+      // Создаем заголовок
+      const h1 = document.createElement('h1');
+      h1.textContent = 'Создание ' + pageName;
+      modal.appendChild(h1);
+
+      // Получаем заголовки таблицы
+      const headers = table.querySelectorAll('thead th');
+
+      // Проходим по каждому заголовку и создаем соответствующие элементы
+      headers.forEach(header => {
+        // Проверяем наличие атрибута data-autoIncrement
+        const autoIncrement = header.getAttribute('data-autoIncrement');
+        if (autoIncrement) {
+          return; // Пропускаем этот заголовок, если есть атрибут data-autoIncrement
+        }
+
+        const label = document.createElement('label');
+        label.textContent = header.textContent + ': ';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = header.getAttribute('name');
+        input.setAttribute('name', header.getAttribute('name'));
+
+        const expandedOrder = header.getAttribute('data-input-order');
+        input.setAttribute('data-input-order', expandedOrder);
+
+        // Проверяем и присваиваем дополнительные атрибуты
+        const expandedSource = header.getAttribute('data-expanded-source');
+        if (expandedSource) {
+          input.setAttribute('data-expanded-source', expandedSource);
+
+          const expandedColumns = header.getAttribute('data-expanded-columns');
+          input.setAttribute('data-expanded-columns', expandedColumns);
+
+          const expandedPrefix = header.getAttribute('data-expanded-prefix');
+          input.setAttribute('data-expanded-prefix', expandedPrefix);
+
+          // Настройки для дополнительных атрибутов
+          input.classList.add('additionalInput');
+          input.readOnly = true;
+          input.setAttribute('autocomplete', 'off');
+
+          // Добавляем обработчик клика
+          input.addEventListener('click', function () {
+            DataSourceClick(input, modal);
+          });
+        } else {
+          // Добавляем обработчик onChange если нет дополнительных атрибутов
+          input.addEventListener('change', function() {
+            BlockElementInput(modal);
+          });
+        }
+
+        const joinTableName = header.getAttribute('data-joinTableName');
+        if (joinTableName) {
+          input.setAttribute('data-joinTableName', joinTableName);
+
+          const joinColumnName = header.getAttribute('data-joinColumnName');
+          input.setAttribute('data-joinColumnName', joinColumnName);
+        }
+
+        // Проверяем наличие атрибута data-variates и создаем радио-кнопки
+        const variates = header.getAttribute('data-variates');
+        if (variates) {
+          CreateRadioButtonsContainer(header, modal, expandedOrder);
+          return; // Пропускаем создание обычного input, так как создаем радио-кнопки
+        }
+
+        // Создаем контейнер для label и input
+        const inputContainer = document.createElement('div');
+        inputContainer.classList.add('inputContainer');
+        inputContainer.appendChild(label);
+
+        // Проверяем наличие атрибута data-canBeNull и вызываем AddClearButton
+        const canBeNull = header.getAttribute('data-canBeNull');
+        if (canBeNull) {
+          AddClearButton(modal, inputContainer, input); // Передаем inputContainer и input
+        } else {
+          inputContainer.appendChild(input);
+        }
+
+        // Добавляем inputContainer в модальное окно
+        modal.appendChild(inputContainer);
+      });
+
+      // Создаем контейнер для кнопок
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.setAttribute('class', 'container_buttons');
+
+      // Создаем кнопку ОК
+      const okButton = document.createElement('button');
+      okButton.textContent = 'Создать';
+      okButton.className = 'greenButton';
+      // Изменение обработчика события для кнопки "Создать"
+      okButton.addEventListener('click', function () {
+        SubmitUEClick(modal); // Call SubmitUEClick instead of CreateRowModalSubmit
+      });
+
+      // Создаем кнопку закрыть
+      const closeButton = document.createElement('button');
+      closeButton.setAttribute('class', 'redButton');
+      closeButton.textContent = 'Закрыть';
+      closeButton.addEventListener('click', function () {
+        CloseModal(modal);
+      });
+
+      buttonsContainer.appendChild(okButton);
+      buttonsContainer.appendChild(closeButton);
+
+      // Добавляем контейнер с кнопками в модальное окно
+      modal.appendChild(buttonsContainer);
+
+      BlockElementInput(modal);
+    } else {
+      // Создаем окно
+      const modal = document.createElement('div');
+      modal.id = 'modalCreateRow';
+      modal.setAttribute('class', 'modal');
+      document.body.appendChild(modal);
+
+      // Создаем оверлей
+      CreateOverlay(modal);
+
+      // Создаем заголовок
+      const h1 = document.createElement('h1');
+      h1.textContent = 'Создание ' + pageName;
+      modal.appendChild(h1);
+
+      // Получаем заголовки таблицы
+      const headers = table.querySelectorAll('thead th');
+
+      // Проходим по каждому заголовку и создаем соответствующие элементы
+      headers.forEach(header => {
+        // Проверяем наличие атрибута data-autoIncrement
+        const autoIncrement = header.getAttribute('data-autoIncrement');
+        if (autoIncrement) {
+          return; // Пропускаем этот заголовок, если есть атрибут data-autoIncrement
+        }
+
+        const label = document.createElement('label');
+        label.textContent = header.textContent + ': ';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = header.getAttribute('name');
+        input.setAttribute('name', header.getAttribute('name'));
+
+        const expandedOrder = header.getAttribute('data-input-order');
+        input.setAttribute('data-input-order', expandedOrder);
+
+        // Проверяем и присваиваем дополнительные атрибуты
+        const expandedSource = header.getAttribute('data-expanded-source');
+        if (expandedSource) {
+          input.setAttribute('data-expanded-source', expandedSource);
+
+          const expandedColumns = header.getAttribute('data-expanded-columns');
+          input.setAttribute('data-expanded-columns', expandedColumns);
+
+          const expandedPrefix = header.getAttribute('data-expanded-prefix');
+          input.setAttribute('data-expanded-prefix', expandedPrefix);
+
+          // Настройки для дополнительных атрибутов
+          input.classList.add('additionalInput');
+          input.readOnly = true;
+          input.setAttribute('autocomplete', 'off');
+
+          // Добавляем обработчик клика
+          input.addEventListener('click', function () {
+            DataSourceClick(input, modal);
+          });
+        } else {
+          // Добавляем обработчик onChange если нет дополнительных атрибутов
+          input.addEventListener('change', function() {
+            BlockElementInput(modal);
+          });
+        }
+
+        const joinTableName = header.getAttribute('data-joinTableName');
+        if (joinTableName) {
+          input.setAttribute('data-joinTableName', joinTableName);
+
+          const joinColumnName = header.getAttribute('data-joinColumnName');
+          input.setAttribute('data-joinColumnName', joinColumnName);
+        }
+
+        // Проверяем наличие атрибута data-variates и создаем радио-кнопки
+        const variates = header.getAttribute('data-variates');
+        if (variates) {
+          CreateRadioButtonsContainer(header, modal, expandedOrder);
+          return; // Пропускаем создание обычного input, так как создаем радио-кнопки
+        }
+
+        // Создаем контейнер для label и input
+        const inputContainer = document.createElement('div');
+        inputContainer.classList.add('inputContainer');
+        inputContainer.appendChild(label);
+
+        // Проверяем наличие атрибута data-canBeNull и вызываем AddClearButton
+        const canBeNull = header.getAttribute('data-canBeNull');
+        if (canBeNull) {
+          AddClearButton(modal, inputContainer, input); // Передаем inputContainer и input
+        } else {
+          inputContainer.appendChild(input);
+        }
+
+        // Добавляем inputContainer в модальное окно
+        modal.appendChild(inputContainer);
+      });
+
+      // Создаем контейнер для кнопок
+      const buttonsContainer = document.createElement('div');
+      buttonsContainer.setAttribute('class', 'container_buttons');
+
+      // Создаем кнопку ОК
+      const okButton = document.createElement('button');
+      okButton.textContent = 'Создать';
+      okButton.className = 'greenButton';
+      okButton.addEventListener('click', function () {
+        CreateRowModalSubmit(modal, table);
+      });
+
+      // Создаем кнопку закрыть
+      const closeButton = document.createElement('button');
+      closeButton.setAttribute('class', 'redButton');
+      closeButton.textContent = 'Закрыть';
+      closeButton.addEventListener('click', function () {
+        CloseModal(modal);
+      });
+
+      buttonsContainer.appendChild(okButton);
+      buttonsContainer.appendChild(closeButton);
+
+      // Добавляем контейнер с кнопками в модальное окно
+      modal.appendChild(buttonsContainer);
+
+      BlockElementInput(modal);
+    }
+  } else {
     // Создаем окно
     const modal = document.createElement('div');
     modal.id = 'modalCreateRow';
@@ -721,54 +1129,80 @@ function CreateRowModal(table) {
 
     // Проходим по каждому заголовку и создаем соответствующие элементы
     headers.forEach(header => {
-        const label = document.createElement('label');
-        label.textContent = header.textContent + ': ';
+      // Проверяем наличие атрибута data-autoIncrement
+      const autoIncrement = header.getAttribute('data-autoIncrement');
+      if (autoIncrement) {
+        return; // Пропускаем этот заголовок, если есть атрибут data-autoIncrement
+      }
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = header.getAttribute('name');
-        input.setAttribute('name', header.getAttribute('name'));
+      const label = document.createElement('label');
+      label.textContent = header.textContent + ': ';
 
-        const expandedOrder = header.getAttribute('data-input-order');
-        input.setAttribute('data-input-order', expandedOrder);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = header.getAttribute('name');
+      input.setAttribute('name', header.getAttribute('name'));
 
-        // Проверяем и присваиваем дополнительные атрибуты
-        const expandedSource = header.getAttribute('data-expanded-source');
-        if (expandedSource) {
-            input.setAttribute('data-expanded-source', expandedSource);
+      const expandedOrder = header.getAttribute('data-input-order');
+      input.setAttribute('data-input-order', expandedOrder);
 
-            const expandedColumns = header.getAttribute('data-expanded-columns');
-            input.setAttribute('data-expanded-columns', expandedColumns);
+      // Проверяем и присваиваем дополнительные атрибуты
+      const expandedSource = header.getAttribute('data-expanded-source');
+      if (expandedSource) {
+        input.setAttribute('data-expanded-source', expandedSource);
 
-            const expandedPrefix = header.getAttribute('data-expanded-prefix');
-            input.setAttribute('data-expanded-prefix', expandedPrefix);
+        const expandedColumns = header.getAttribute('data-expanded-columns');
+        input.setAttribute('data-expanded-columns', expandedColumns);
 
-            // Настройки для дополнительных атрибутов
-            input.classList.add('additionalInput');
-            input.readOnly = true;
-            input.setAttribute('autocomplete', 'off');
+        const expandedPrefix = header.getAttribute('data-expanded-prefix');
+        input.setAttribute('data-expanded-prefix', expandedPrefix);
 
-            // Добавляем обработчик клика
-            input.addEventListener('click', function () {
-                DataSourceClick(input, modal);
-            });
-        } else {
-            // Добавляем обработчик onChange если нет дополнительных атрибутов
-            input.addEventListener('change', function() {
-                BlockElementInput(modal);
-            });
-        }
+        // Настройки для дополнительных атрибутов
+        input.classList.add('additionalInput');
+        input.readOnly = true;
+        input.setAttribute('autocomplete', 'off');
 
-        const joinTableName = header.getAttribute('data-joinTableName');
-        if (joinTableName) {
-            input.setAttribute('data-joinTableName', joinTableName);
+        // Добавляем обработчик клика
+        input.addEventListener('click', function () {
+          DataSourceClick(input, modal);
+        });
+      } else {
+        // Добавляем обработчик onChange если нет дополнительных атрибутов
+        input.addEventListener('change', function() {
+          BlockElementInput(modal);
+        });
+      }
 
-            const joinColumnName = header.getAttribute('data-joinColumnName');
-            input.setAttribute('data-joinColumnName', joinColumnName);
-        }
+      const joinTableName = header.getAttribute('data-joinTableName');
+      if (joinTableName) {
+        input.setAttribute('data-joinTableName', joinTableName);
 
-        modal.appendChild(label);
-        modal.appendChild(input);
+        const joinColumnName = header.getAttribute('data-joinColumnName');
+        input.setAttribute('data-joinColumnName', joinColumnName);
+      }
+
+      // Проверяем наличие атрибута data-variates и создаем радио-кнопки
+      const variates = header.getAttribute('data-variates');
+      if (variates) {
+        CreateRadioButtonsContainer(header, modal, expandedOrder);
+        return; // Пропускаем создание обычного input, так как создаем радио-кнопки
+      }
+
+      // Создаем контейнер для label и input
+      const inputContainer = document.createElement('div');
+      inputContainer.classList.add('inputContainer');
+      inputContainer.appendChild(label);
+
+      // Проверяем наличие атрибута data-canBeNull и вызываем AddClearButton
+      const canBeNull = header.getAttribute('data-canBeNull');
+      if (canBeNull) {
+        AddClearButton(modal, inputContainer, input); // Передаем inputContainer и input
+      } else {
+        inputContainer.appendChild(input);
+      }
+
+      // Добавляем inputContainer в модальное окно
+      modal.appendChild(inputContainer);
     });
 
     // Создаем контейнер для кнопок
@@ -780,7 +1214,7 @@ function CreateRowModal(table) {
     okButton.textContent = 'Создать';
     okButton.className = 'greenButton';
     okButton.addEventListener('click', function () {
-        CreateRowModalSubmit(modal, table);
+      CreateRowModalSubmit(modal, table);
     });
 
     // Создаем кнопку закрыть
@@ -788,16 +1222,80 @@ function CreateRowModal(table) {
     closeButton.setAttribute('class', 'redButton');
     closeButton.textContent = 'Закрыть';
     closeButton.addEventListener('click', function () {
-        CloseModal(modal);
+      CloseModal(modal);
     });
 
-    buttonsContainer.appendChild(closeButton);
     buttonsContainer.appendChild(okButton);
+    buttonsContainer.appendChild(closeButton);
 
     // Добавляем контейнер с кнопками в модальное окно
     modal.appendChild(buttonsContainer);
 
     BlockElementInput(modal);
+  }
+}
+
+function CreateRadioButtonsContainer(field, modal, inputOrder) {
+    const container = document.createElement('div');
+    container.setAttribute('class', 'radioButtonsContainer');
+
+    // Создаем заголовок для группы радио-кнопок
+    const label = document.createElement('label');
+    label.textContent = field.textContent + ': ';
+    container.appendChild(label);
+
+    // Получаем массивы значений из атрибутов data-variates и data-values
+    const variates = JSON.parse(field.getAttribute('data-variates'));
+    const values = JSON.parse(field.getAttribute('data-values'));
+
+    // Создаем радио-кнопки для каждого значения
+    variates.forEach((variate, index) => {
+        const radioContainer = document.createElement('div');
+        radioContainer.setAttribute('class', 'radioContainer');
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = field.getAttribute('name');
+        input.value = values[index]; // Используем значение из data-values
+        input.id = field.getAttribute('name') + '_' + variate; // Используем название из data-variates
+        input.setAttribute('data-input-order', inputOrder); // Присваиваем data-input-order
+
+        const radioLabel = document.createElement('label');
+        radioLabel.textContent = variate; // Используем название из data-variates
+        radioLabel.setAttribute('for', input.id);
+
+        radioContainer.appendChild(input);
+        radioContainer.appendChild(radioLabel);
+        container.appendChild(radioContainer);
+    });
+
+    // Добавляем контейнер с радио-кнопками в модальное окно
+    modal.appendChild(container);
+}
+
+function AddClearButton(modal, inputContainer, input) {
+    const clearButton = document.createElement('div');
+    clearButton.textContent = '✖';
+    clearButton.classList.add('clearButton');
+    clearButton.addEventListener('click', function () {
+        input.value = '';
+        input.readOnly = false; // Временно убрать readOnly для очистки
+        input.readOnly = true; // Восстановить readOnly
+
+        // Проверяем наличие атрибута data-value и устанавливаем его в null
+        if (input.hasAttribute('data-value')) {
+            input.setAttribute('data-value', null);
+        }
+    });
+
+    // Создадим новый контейнер для input и clearButton
+    const wrapper = document.createElement('div');
+    wrapper.classList.add('inputWrapper');
+    wrapper.appendChild(input);
+    wrapper.appendChild(clearButton);
+
+    // Добавляем wrapper в inputContainer
+    inputContainer.appendChild(wrapper);
 }
 
 function CreateRowModalSubmit(modal, table) {
@@ -814,6 +1312,9 @@ function CreateRowModalSubmit(modal, table) {
             } else {
                 dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
             }
+        } else if (input.type === 'radio' && input.checked) {
+            // Добавляем значение выбранной радиокнопки в JSON
+            dataForServer[input.name] = input.value;
         }
     });
 
@@ -832,14 +1333,14 @@ function CreateRowModalSubmit(modal, table) {
     .then(response => {
         // Проверяем статус ответа
         if (!response.ok) {
-            return response.json().then(errorBody => {
-                throw new Error(errorBody.error);
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
             });
         }
         return response.json();
     })
     .then(data => {
-        console.log('Success:', data);
+        alert('Запись успешно создана');
         // Вызов функции для обновления страницы таблицы после успешного запроса
         GetPageFromTable(currentPage);
         CloseModal(modal);
@@ -851,7 +1352,7 @@ function CreateRowModalSubmit(modal, table) {
 }
 
 function EditRowModal(table) {
-    // Находим строку с классом selected
+    // Находим строку с классом 'selected'
     const selectedRow = table.querySelector('tr.selected');
     if (!selectedRow) {
         alert('Выберите строку для редактирования.');
@@ -884,6 +1385,14 @@ function EditRowModal(table) {
     headers.forEach((header, index) => {
         const label = document.createElement('label');
         label.textContent = header.textContent + ': ';
+
+        // Проверяем наличие атрибута data-variates и создаем радио-кнопки
+        const variates = header.getAttribute('data-variates');
+        if (variates) {
+            const expandedOrder = header.getAttribute('data-input-order');
+            CreateRadioButtonsContainer(header, modal, expandedOrder, cells[index].textContent.trim());
+            return; // Пропускаем создание обычного input, так как создаем радио-кнопки
+        }
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -926,8 +1435,21 @@ function EditRowModal(table) {
             });
         }
 
-        modal.appendChild(label);
-        modal.appendChild(input);
+        // Создаем контейнер для label и input
+        const inputContainer = document.createElement('div');
+        inputContainer.classList.add('inputContainer');
+        inputContainer.appendChild(label);
+
+        // Проверяем наличие атрибута data-canBeNull и вызываем AddClearButton
+        const canBeNull = header.getAttribute('data-canBeNull');
+        if (canBeNull) {
+            AddClearButton(modal, inputContainer, input); // Передаем inputContainer и input
+        } else {
+            inputContainer.appendChild(input);
+        }
+
+        // Добавляем inputContainer в модальное окно
+        modal.appendChild(inputContainer);
     });
 
     // Создаем контейнер для кнопок
@@ -961,14 +1483,39 @@ function EditRowModalSubmit(modal, table) {
     const inputs = modal.querySelectorAll('input');
     const dataForServer = {};
 
-    // Считываем значения всех инпутов, включая disabled
+    // Группируем радио кнопки по атрибуту name
+    const radioButtons = {};
     inputs.forEach(input => {
-        const hiddenValue = input.getAttribute('data-hidden');
-        const expandedSource = input.getAttribute('data-expanded-source');
-        if (expandedSource !== null) {
-            dataForServer[input.id] = input.getAttribute('data-value');
-        } else {
-            dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+        if (input.type === 'radio') {
+            // Если еще нет группы для этого name, создаем
+            if (!radioButtons[input.name]) {
+                radioButtons[input.name] = [];
+            }
+            radioButtons[input.name].push(input);
+        }
+    });
+
+    // Обрабатываем радио кнопки
+    for (const groupName in radioButtons) {
+        const buttons = radioButtons[groupName];
+        buttons.forEach(button => {
+            if (button.checked) {
+                dataForServer[groupName] = button.value;
+            }
+        });
+    }
+
+    // Обрабатываем остальные инпуты
+    inputs.forEach(input => {
+        // Пропускаем радио кнопки, так как они уже обработаны
+        if (input.type !== 'radio') {
+            const hiddenValue = input.getAttribute('data-hidden');
+            const expandedSource = input.getAttribute('data-expanded-source');
+            if (expandedSource !== null) {
+                dataForServer[input.id] = input.getAttribute('data-value');
+            } else {
+                dataForServer[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+            }
         }
     });
 
@@ -1011,18 +1558,25 @@ function EditRowModalSubmit(modal, table) {
 
 function UpdateTableRow(row, data, table, modal) {
     const cells = row.querySelectorAll('td');
-    const headers = table.querySelectorAll('th');
+    const headers = table.querySelectorAll('th'); // Get all headers directly from the table
 
-    Object.keys(data).forEach((key, index) => {
-        const header = headers[index];
+    Object.keys(data).forEach((key) => {
         const inputElement = modal.querySelector(`#${key}`);
 
-        if (cells[index] && header) {
-            if (header.getAttribute('data-expanded-source') !== null) {
-                cells[index].setAttribute('data-value', inputElement ? inputElement.value : data[key]);
-                cells[index].textContent = inputElement ? inputElement.value : '';
+        // Find the corresponding header based on the 'name' attribute
+        const matchingHeader = Array.from(headers).find(header => {
+            return header.getAttribute('name') === key;
+        });
+
+        // Find the corresponding cell based on the header index
+        const matchingCell = cells[Array.from(headers).indexOf(matchingHeader)];
+
+        if (matchingCell) {
+            if (matchingCell.getAttribute('data-expanded-source') !== null) {
+                matchingCell.setAttribute('data-value', inputElement ? inputElement.value : data[key]);
+                matchingCell.textContent = inputElement ? inputElement.value : '';
             } else {
-                cells[index].textContent = data[key];
+                matchingCell.textContent = data[key];
             }
         }
     });
@@ -1042,14 +1596,31 @@ function DeleteSelectedRow(table) {
         return;
     }
 
-    // Получаем заголовки таблицы
+   // Получаем заголовки таблицы
     const headers = table.querySelectorAll('thead th');
     const dataForServer = {};
 
     // Проходим по каждому заголовку и считываем данные из выбранной строки
     headers.forEach((header, index) => {
         const cell = selectedRow.cells[index];
-        const cellData = cell.getAttribute('data-value') || cell.textContent.trim();
+        let cellData = cell.textContent.trim();
+
+        // Проверяем наличие атрибута 'data-value' или 'data-hidden'
+        const dataValue = cell.getAttribute('data-value');
+        const dataHidden = cell.getAttribute('data-hidden');
+
+        if (dataValue) {
+            cellData = dataValue;
+        } else if (dataHidden) {
+            cellData = dataHidden;
+        } else {
+            // Проверяем стиль ячейки
+            if (cell.style.backgroundColor === 'red') {
+                cellData = false;
+            } else if (cell.style.backgroundColor === 'green') {
+                cellData = true;
+            }
+        }
 
         // Используем атрибут name заголовка как ключ для данных
         const key = header.getAttribute('name');
@@ -1171,8 +1742,8 @@ function ModalCreateInvoice() {
         ModalCreateAct(invoiceType);
     });
 
-    buttonsContainer.appendChild(closeButton);
     buttonsContainer.appendChild(submitButton);
+    buttonsContainer.appendChild(closeButton);
 
     // Добавляем контейнер с кнопками в модальное окно
     modal.appendChild(buttonsContainer);
@@ -1313,10 +1884,8 @@ function ModalCreateAct(invoiceType) {
   sendButton.className = 'greenButton';
   sendButton.disabled = true;
   sendButton.addEventListener('click', () => {
-    SubmitActClick(modal);
-    CloseModal(modal);
-    var modalInvoice = document.getElementById('modalInvoice');
-    CloseModal(modalInvoice);
+    SubmitInvoiceData(modal);
+
   });
 
   // Создаем кнопку закрыть
@@ -1328,82 +1897,172 @@ function ModalCreateAct(invoiceType) {
   });
 
   modal.appendChild(buttonsContainer);
-  buttonsContainer.appendChild(closeButton);
   buttonsContainer.appendChild(sendButton);
+  buttonsContainer.appendChild(closeButton);
   document.body.appendChild(modal);
   CreateOverlay(modal);
 }
 
-function SubmitActClick(modal) {
-    // Шаг 1: Получаем значения по id и отправляем fetch запрос
+function SubmitInvoiceData(modal) {
     const invoiceDateValue = document.getElementById('Дата_подписания').value;
     const invoiceEmployeeNumberElement = document.getElementById('Номер_сотрудника');
     const invoiceEmployeeNumberValue = invoiceEmployeeNumberElement.getAttribute('data-hidden') || invoiceEmployeeNumberElement.value;
 
-    const dataForInvoice = {
-        "Дата_подписания": invoiceDateValue,
-        "Номер_сотрудника": invoiceEmployeeNumberValue
+    const authorityCheckData = {
+        employeeId: invoiceEmployeeNumberValue,
+        authorityName: 'Может_подписать_накладную'
     };
 
-    // Зашифровываем слово "Накладная"
-    const encodedInvoiceWord = encodeURIComponent('Накладная');
-
-    // Отправляем fetch запрос
-    fetch(`/addData/${encodedInvoiceWord}`, {
+    // Предварительный fetch запрос для проверки полномочий
+    return fetch('/checkPowers', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(dataForInvoice)
+        body: JSON.stringify(authorityCheckData)
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data);
-        // После успешного создания накладной добавляем "Номер_накладной" в dataForModal
-        const invoiceNumber = data["Номер_накладной"];
-        if (invoiceNumber) {
-            // Шаг 2: Извлекаем все input из modal, которые не являются radio и не disabled, и формируем JSON
-            const inputs = modal.querySelectorAll('input');
-            const dataForModal = {};
-
-            inputs.forEach(input => {
-                if (input.type !== 'radio' && !input.disabled) {
-                    // Проверяем наличие атрибута data-hidden
-                    const hiddenValue = input.getAttribute('data-hidden');
-                    dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
-                }
-            });
-
-            // Добавляем "Номер_накладной" в dataForModal
-            dataForModal["Номер_накладной"] = invoiceNumber;
-
-            // Получаем id модального окна
-            const modalId = modal.name;
-
-            // Отправляем fetch запрос
-            fetch(`/addData/${modalId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(dataForModal)
-            })
-            .then(response => response.json())
-            .then(data => {
-                GetPageFromTable(currentPage);
-                var UEMenu_number = document.getElementById('UEMenu_number');
-                UEMenu_number.textContent = invoiceNumber;
-            })
-            .catch(error => {
-                alert(error.message);
-                console.error('There has been a problem with your fetch operation:', error);
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
             });
         }
+        // Если ответ успешен, переход к следующему Promise
+        return;
+    })
+    .then(() => {
+        const dataForInvoice = {
+            "Дата_подписания": invoiceDateValue,
+            "Номер_сотрудника": invoiceEmployeeNumberValue
+        };
+
+        const encodedInvoiceWord = encodeURIComponent('Накладная');
+
+        // Отправляем fetch запрос для накладной
+        return fetch(`/addData/${encodedInvoiceWord}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataForInvoice)
+        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Invoice Data Success:', data);
+        const invoiceNumber = data["Номер_накладной"];
+
+        return SubmitModalData(modal, invoiceNumber);
     })
     .catch(error => {
         alert(error.message);
-        console.error('There has been a problem with your fetch operation:', error);
     });
+}
+
+function SubmitModalData(modal, invoiceNumber) {
+    const actTypeElement = document.getElementById('actType');
+    const actTypeValue = actTypeElement.value;
+
+    if (actTypeValue === '1') {
+        const inputs = modal.querySelectorAll('input');
+        const dataForModal = {};
+
+        inputs.forEach(input => {
+            if (input.type !== 'radio' && !input.disabled) {
+                const hiddenValue = input.getAttribute('data-hidden');
+                dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+            }
+        });
+
+        dataForModal["Номер_накладной"] = invoiceNumber;
+        handleModalDataSuccess(dataForModal, modal, invoiceNumber);
+        return;
+    }
+
+    let authorityName;
+    if (actTypeValue === '2') {
+        authorityName = 'Может_принять_поступление';
+    } else if (actTypeValue === '3') {
+        authorityName = 'Может_инициировать_акт_отправки';
+    }
+
+    const invoiceEmployeeNumberElement = document.getElementById('Номер_сотрудника');
+    const invoiceEmployeeNumberValue = invoiceEmployeeNumberElement.getAttribute('data-hidden') || invoiceEmployeeNumberElement.value;
+
+    const authorityCheckData = {
+        employeeId: invoiceEmployeeNumberValue,
+        authorityName: authorityName
+    };
+
+    // Предварительный fetch запрос для проверки полномочий
+    fetch('/checkPowers', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(authorityCheckData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
+            });
+        }
+        // Если ответ успешен, переход к следующему Promise
+        return;
+    })
+    .then(() => {
+        const inputs = modal.querySelectorAll('input');
+        const dataForModal = {};
+
+        inputs.forEach(input => {
+            if (input.type !== 'radio' && !input.disabled) {
+                const hiddenValue = input.getAttribute('data-hidden');
+                dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
+            }
+        });
+
+        dataForModal["Номер_накладной"] = invoiceNumber;
+        const modalId = modal.name;
+
+        // Отправляем fetch запрос для модального окна
+        return fetch(`/addData/${modalId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataForModal)
+        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
+            });
+        }
+        return response.json();
+    })
+    .then(data => handleModalDataSuccess(data, modal, invoiceNumber))
+    .catch(error => console.error('Error:', error));
+}
+
+function handleModalDataSuccess(data, modal, invoiceNumber) {
+    console.log('Modal Data Success:', data);
+    GetPageFromTable(currentPage);
+
+    const UEMenu_number = document.getElementById('UEMenu_number');
+    UEMenu_number.textContent = invoiceNumber;
+
+    const modalInvoice = document.getElementById('modalInvoice');
+    CloseModal(modalInvoice);
+    CloseModal(modal);
 }
 
 /////////////////////// СОЗДАНИЕ УЕ
@@ -1489,60 +2148,20 @@ function InvoiceRowClick(row) {
   });
 }
 
-function ModalCreateUE() {
-    // Создаем окно
-    const modal = document.createElement('div');
-    modal.id = 'modalInvoice';
-    modal.setAttribute('class', 'modal');
-    document.body.appendChild(modal);
-
-    CreateOverlay(modal);
-
-    // Создаем и добавляем поля ввода для серийного номера
-    const serialNumberInput = document.createElement('input');
-    serialNumberInput.type = 'text';
-    serialNumberInput.id = 'Серийный_номер';
-    serialNumberInput.setAttribute('name', 'Серийный_номер');
-    modal.appendChild(serialNumberInput);
-
-    const serialNumberLabel = document.createElement('label');
-    serialNumberLabel.textContent = 'Серийный номер: ';
-    modal.insertBefore(serialNumberLabel, serialNumberInput);
-
-    // Создаем контейнер для кнопок
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.setAttribute('class', 'container_buttons');
-
-    // Создаем кнопку закрыть
-    const closeButton = document.createElement('button');
-    closeButton.setAttribute('class', 'redButton');
-    closeButton.textContent = 'Закрыть';
-    closeButton.addEventListener('click', function() {
-        CloseModal(modal);
-    });
-
-    // Создаем кнопку отправки
-    const submitButton = document.createElement('button');
-    submitButton.textContent = 'Отправить';
-    submitButton.className = 'greenButton';
-    submitButton.addEventListener('click', function() {
-        SubmitUEClick(modal);
-    });
-
-    // Добавляем кнопки в контейнер
-    buttonsContainer.appendChild(closeButton);
-    buttonsContainer.appendChild(submitButton);
-
-    // Добавляем контейнер с кнопками в модальное окно
-    modal.appendChild(buttonsContainer);
-}
-
 function SubmitUEClick(modal) {
+
     let data = {};
 
     const inputs = modal.querySelectorAll('input');
     inputs.forEach(input => {
-        data[input.id] = input.value;
+        let inputValue = input.value;
+        // Check for 'data-value' attribute
+        const dataValue = input.getAttribute('data-value');
+        if (dataValue) {
+            inputValue = dataValue;
+        }
+
+        data[input.id] = inputValue;
     });
 
     const jsonData = JSON.stringify(data);
@@ -1554,14 +2173,27 @@ function SubmitUEClick(modal) {
         },
         body: jsonData,
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         console.log('Success:', data);
+
+        // Retrieve UEMenuNumberValue and check if it's empty
+        const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
+        if (UEMenuNumberValue === "") {
+            throw new Error("The 'UEMenu_number' is empty. Please verify the data.");
+        }
 
         const SerialNumberValue = modal.querySelector('#Серийный_номер').value;
 
         const newData = {
-            Номер_накладной: document.getElementById('UEMenu_number').textContent,
+            Номер_накладной: UEMenuNumberValue,
             Серийный_номер: SerialNumberValue
         };
 
@@ -1577,8 +2209,8 @@ function SubmitUEClick(modal) {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(errorBody => {
-                throw new Error(errorBody.error);
+            return response.json().then(errData => {
+                throw new Error(errData.error || 'Network response was not ok');
             });
         }
         return response.json();
@@ -1588,9 +2220,6 @@ function SubmitUEClick(modal) {
 
         // Close the modal using the CloseModal function
         CloseModal(modal);
-
-        // Retrieve UEMenuNumberValue again
-        const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
 
         // Find the table row with the matching UEMenuNumberValue
         const table = document.getElementById('mainTable');
@@ -1604,13 +2233,12 @@ function SubmitUEClick(modal) {
             }
         });
 
-        // Call the InvoiceRowClick function with the found row
         if (targetRow) {
             InvoiceRowClick(targetRow);
         }
     })
-    .catch((error) => {
-        alert(error);
+    .catch(error => {
+        alert(error.message);
     });
 }
 
@@ -1818,3 +2446,49 @@ function DataSourceModalRowClick(element, row, modal) {
     CloseModal(modal);
 }
 
+/////////////////////// СОТРУДНИКИ
+
+function EmployeeRowClick(row) {
+  // Находим элемент с id employeeID_display
+  var employeeIDDisplay = document.getElementById('UEMenu_number');
+
+  // Проверяем, что строка row и элемент employeeIDDisplay существуют
+  if (!row || !employeeIDDisplay) {
+    console.error('Не удалось найти элемент row или employeeIDDisplay');
+    return;
+  }
+
+  // Извлекаем значение из первой ячейки строки
+  var firstCellText = row.cells[0].textContent;
+
+  // Помещаем значение в элемент с id employeeIDDisplay
+  employeeIDDisplay.textContent = firstCellText;
+
+  // Формируем JSON объект с id сотрудника
+  var jsonData = {
+    id_employee: firstCellText
+  };
+
+  // Отправляем запрос на сервер
+  fetch(`/getPowersForEmployee`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Ищем таблицу с id UEMenu_table
+    var table = document.getElementById('UEMenu_table');
+    if (table) {
+      // Добавляем полномочия в таблицу с помощью функции ParseJsonToTable
+      ParseJsonToTable(data, table);
+    } else {
+      console.error('Не удалось найти таблицу с id UEMenu_table');
+    }
+  })
+  .catch(error => {
+    console.error('Ошибка при получении полномочий сотрудника:', error);
+  });
+}

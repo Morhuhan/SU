@@ -7,6 +7,8 @@
     <script th:inline="javascript" src="SubmitFormFunctions/Functions.js"></script>
     <script th:inline="javascript" src="Utility/GeneralUtilites.js"></script>
 
+
+
     <!-- Глобальные переменные JS -->
     <script th:inline="javascript">
         var currentPage = 1;
@@ -51,6 +53,8 @@
 
         });
     </script>
+
+    <div hidden id="pageName"> Учетной Единицы </div>
 
 </head>
 <body>
@@ -151,9 +155,7 @@
     <div id="UEMenu">
         <div id="UEMenu_header">
             <div> Накладная номер </div>
-            <div id="UEMenu_number">
-                <!-- Место для номера накладной -->
-            </div>
+            <div id="UEMenu_number"></div>
             <div> учетные единицы: </div>
         </div>
 
@@ -161,11 +163,74 @@
             <table id="UEMenu_table" class="table" name="Учетная_единица">
                 <thead>
                 <tr>
-                    <th name="Серийный_номер">Серийный номер</th>
-                    <th name="Тип_материала">Тип материала</th>
-                    <th name="Номер_ЗБМ">Номер ЗБМ</th>
-                    <th name="Номер_здания">Номер здания</th>
-                    <th name="Номер_помещения">Номер помещения</th>
+                    <th name="Серийный_номер"
+                        data-input-order="0">Серийный номер</th>
+
+                    <th name="Вес_нетто"
+                        data-input-order="1">Вес нетто</th>
+
+                    <th name="Инвентарный_номер_весов"
+                        data-expanded-source="Весы"
+                        data-expanded-columns="Инвентарный_номер_весов, Модель"
+                        data-expanded-prefix="Номер: *, *"
+                        data-editable="true"
+                        data-input-order="2">
+                        Инвентарный номер весов
+                    </th>
+
+                    <th name="Номер_контейнера"
+                        data-expanded-source="Контейнер"
+                        data-expanded-columns="Номер_контейнера, Допустимый_вес"
+                        data-expanded-prefix="Номер: *, Допустимый вес:*"
+                        data-editable="true"
+                        data-input-order="3">
+                        Номер контейнера
+                    </th>
+
+                    <th name="Тип_материала"
+                        data-expanded-source="Тип_материала"
+                        data-expanded-columns="Тип_материала, Название_материала, Атомная_масса"
+                        data-expanded-prefix="Тип: * *, *"
+                        data-editable="true"
+                        data-input-order="4">
+                        Тип материала
+                    </th>
+
+                    <th name="Номер_ЗБМ"
+                        data-expanded-source="Зона_баланса_материалов"
+                        data-expanded-columns="Номер_ЗБМ"
+                        data-expanded-prefix="Номер: *"
+                        data-editable="true"
+                        data-input-order="6">
+                        ЗБМ
+                    </th>
+
+                    <th name="Номер_здания"
+                        data-expanded-source="Здание"
+                        data-expanded-columns="Номер_ЗБМ, Номер_здания"
+                        data-expanded-prefix="ЗБМ: *, Здание: *"
+                        data-editable="true"
+                        data-input-order="7"
+
+                        data-joinTableName="Зона_баланса_материалов"
+                        data-joinColumnName="Номер_ЗБМ">
+
+                        Здание
+                    </th>
+
+                    <th name="Номер_помещения"
+                        data-expanded-source="Помещение"
+                        data-expanded-columns="Номер_ЗБМ, Номер_здания, Номер_помещения"
+                        data-expanded-prefix="ЗБМ: *, Здание: *, Помещение: *"
+                        data-editable="true"
+                        data-input-order="8"
+
+                        data-joinTableName="Здание"
+                        data-joinColumnName="Номер_здания">
+
+                        Помещение
+                    </th>
+
                 </tr>
                 </thead>
                 <tbody>
@@ -182,7 +247,7 @@
                 <input type="text"  id="UESearchInput" placeholder="Введите данные для поиска" onchange="MakeSearch(UESelect, UEMenu_table, UESearchInput)">
             </div>
 
-            <button class="greenButton" onclick="ModalCreateUE()">Создать</button>
+            <button class="greenButton" onclick="CreateRowModal(UEMenu_table)">Создать</button>
         </div>
     </div>
 </div>

@@ -196,10 +196,38 @@ button {
     font-size: 16px;
 }
 
+.inputContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
 input[disabled]{
    background-color: #cccccc;
    color: #666666;
    cursor: default;
+}
+
+.inputWrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+}
+
+.clearButton:hover {
+    cursor: pointer;
+}
+
+.radioButtonsContainer{
+    margin-bottom: -5px;
+    display: flex;
+    /* align-items: center; */
+    flex-direction: column;
+    /* justify-content: center; */
+    border: 1px solid black;
+    gap: 11px;
+    padding: 3px;
 }
 
 button[disabled] {
@@ -254,7 +282,7 @@ button:hover {
 
 .modal {
     width: auto;
-    height: auto;
+    max-height: 700px;
     gap: 20px;
     display: flex;
     position: fixed;
@@ -273,6 +301,16 @@ button:hover {
 
 .modal input[type="text"] {
     border: 1px solid black;
+}
+
+.modal input[type="radio"] {
+    border: 1px solid black;
+    width: 16px;
+    height: 15px;
+    /* display: flex; */
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 }
 
 .modal input[disabled]:hover {
@@ -407,6 +445,20 @@ button:hover {
     margin-top: 10px;
     width: 650px;
     height: 500px;
+    display: flex;
+    flex-direction: column;
+    background-color: #e0e0e0;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 8px;
+    position: fixed;
+}
+
+#employeeMenu {
+    margin-left: 905px;
+    margin-top: 10px;
+    width: 650px;
+    height: 110px;
     display: flex;
     flex-direction: column;
     background-color: #e0e0e0;

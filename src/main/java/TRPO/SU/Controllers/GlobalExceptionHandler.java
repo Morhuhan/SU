@@ -26,12 +26,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SQLException.class)
     public ResponseEntity<Map<String, Object>> handleSQLException(SQLException e) {
         String errorCode = e.getSQLState();
-        String errorMessage = sqlErrorMessages.getOrDefault(errorCode, "Ошибка базы данных: " + e.getMessage());
-
+        String errorMessage = sqlErrorMessages.getOrDefault(errorCode, e.getMessage());
+        // Обрезаем текст ошибки
+        errorMessage = ExceptionTrimmer(errorMessage);
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("error", errorMessage);
         responseBody.put("status", HttpStatus.BAD_REQUEST.value());
-
         return new ResponseEntity<>(responseBody, HttpStatus.BAD_REQUEST);
+    }
+
+    private String ExceptionTrimmer(String errorMessage) {
+        // Ищем индекс строки "Где: "
+        int whereIndex = errorMessage.indexOf("Где: ");
+        // Если "Где: " найдено в строке, обрезаем текст ошибки до этой позиции
+        if (whereIndex != -1) {
+            return errorMessage.substring(0, whereIndex).trim();
+        }
+        // Если не найдено, возвращаем оригинальное сообщение
+        return errorMessage;
     }
 }

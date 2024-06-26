@@ -127,28 +127,38 @@
         <tr>
           <th name="Номер_полномочия"
               data-editable="false"
-              data-input-order="0">Тип материала</th>
+              data-autoIncrement="true"
+              > Номер полномочия</th>
 
           <th name="Может_подписать_накладную"
               data-editable="true"
-              data-input-order="1">Подписать накладную</th>
+              data-variates='["Да", "Нет"]'
+              data-values='["true", "false"]'
+              >Подписать накладную</th>
 
           <th name="Может_инициировать_акт_отправки"
               data-editable="true"
-              data-input-order="2">Инициировать отправку</th>
+              data-variates='["Да", "Нет"]'
+              data-values='["true", "false"]'
+              >Инициировать отправку</th>
 
           <th name="Может_санкционировать_акт_перемещ"
               data-editable="true"
-              data-input-order="3">Санкционировать отправку</th>
+              data-variates='["Да", "Нет"]'
+              data-values='["true", "false"]'
+              >Санкционировать отправку</th>
 
           <th name="Может_завершить_акт_перемещения"
               data-editable="true"
-              data-input-order="4">Завершить перемещение</th>
+              data-variates='["Да", "Нет"]'
+              data-values='["true", "false"]'
+              >Завершить перемещение</th>
 
           <th name="Может_быть_ответственным"
               data-editable="true"
-              data-input-order="5">Ответственный</th>
-
+              data-variates='["Да", "Нет"]'
+              data-values='["true", "false"]'
+              >Ответственный</th>
         </tr>
         </thead>
         <tbody>
