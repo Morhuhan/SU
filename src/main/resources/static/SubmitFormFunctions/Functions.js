@@ -2226,6 +2226,8 @@ function SubmitUEClick(modal) {
         const rows = table.querySelectorAll('tr');
         let targetRow = null;
 
+        const UEMenuNumberValue = document.getElementById('UEMenu_number').textContent;
+
         rows.forEach(row => {
             const firstCell = row.cells[0];
             if (firstCell && firstCell.textContent === UEMenuNumberValue) {
