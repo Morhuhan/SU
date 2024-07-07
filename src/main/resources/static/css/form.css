@@ -525,6 +525,59 @@ button:hover {
     width: 350px;
 }
 
+#modalReceipt, dispatchModal, movingModal {
+    z-index: 200;
+}
+
+#modalReceiptUE {
+    z-index: 300;
+}
+
+#modalReceipt {
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-top-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#receiptTable {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #f0f0f0;
+}
+
+#receiptTable th, #receiptTable td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+}
+
+#receiptTable th {
+    background-color: #d0d0d0;
+}
+
+#receiptTable_container {
+    height: 400px;
+    width: auto;
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+#receiptTable tr.selected {
+    cursor: default;
+    background-color: #e0e0e0;
+}
+
+#receiptTable tr {
+    cursor: default;
+    background-color: #f0f0f0;
+}
+
 /* создание/удаление/изменение */
 
 

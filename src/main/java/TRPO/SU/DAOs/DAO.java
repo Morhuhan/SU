@@ -44,6 +44,11 @@ public class DAO {
         return jdbcTemplate.queryForList(sql, String.class, jsonText);
     }
 
+    public List<String> getAllUE() throws DataAccessException {
+        String sql = "SELECT * FROM Получить_Все_УЕ_В_Наличии()";
+        return jdbcTemplate.queryForList(sql, String.class);
+    }
+
     public String addDataToTable(String tableName, JsonNode jsonNode) throws DataAccessException  {
         String jsonString = jsonNode.toString();
         String sql = "SELECT * FROM добавить_запись_в_таблицу(?, ?::jsonb)";
@@ -78,9 +83,21 @@ public class DAO {
         jdbcTemplate.update(sql, tableName, jsonString);
     }
 
+    public void dispatchUE(JsonNode jsonNode) throws DataAccessException {
+        String jsonString = jsonNode.toString();
+        String sql = "CALL отправить_УЕ(?::jsonb)";
+        jdbcTemplate.update(sql, jsonString);
+    }
+
     public void checkPowers(JsonNode jsonNode) throws DataAccessException {
         String jsonString = jsonNode.toString();
         String sql = "CALL проверить_полномочие(?::jsonb)";
+        jdbcTemplate.update(sql, jsonString);
+    }
+
+    public void checkUE(JsonNode jsonNode) throws DataAccessException {
+        String jsonString = jsonNode.toString();
+        String sql = "CALL Проверить_Допустимость_УЕ(?::jsonb)";
         jdbcTemplate.update(sql, jsonString);
     }
 

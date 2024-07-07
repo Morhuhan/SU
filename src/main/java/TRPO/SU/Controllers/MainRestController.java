@@ -55,6 +55,12 @@ public class MainRestController {
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
+    @PostMapping("/getAllUE")
+    public ResponseEntity<?> getAllUE() {
+        List<String> data = dao.getAllUE();
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
     @PostMapping("/getAllRecordsJoin")
     public ResponseEntity<?> getAllRecordsJoin(
             @RequestBody JsonNode jsonNode) {
@@ -83,6 +89,12 @@ public class MainRestController {
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
+    @PostMapping("/dispatchUE")
+    public ResponseEntity<?> dispatchUE(@RequestBody JsonNode jsonNode) {
+        dao.dispatchUE(jsonNode);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/editData/{tableName}")
     public ResponseEntity<?> editData(
             @PathVariable("tableName") String tableName,
@@ -103,6 +115,13 @@ public class MainRestController {
     public ResponseEntity<?> checkPowers(
             @RequestBody JsonNode jsonNode) {
         dao.checkPowers(jsonNode);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/checkUE")
+    public ResponseEntity<?> checkUE(
+            @RequestBody JsonNode jsonNode) {
+        dao.checkUE(jsonNode);
         return ResponseEntity.ok().build();
     }
 }
