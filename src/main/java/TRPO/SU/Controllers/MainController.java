@@ -63,4 +63,7 @@ public class MainController {
 
     @GetMapping("/representative")
     public String showrepresentative (Model model) { return "RepresentativeForm.html"; };
+
+    @GetMapping("/UE_MATERIAL_FORM")
+    public String showUE_MATERIAL_FORM (Model model) { return "UE_MATERIAL_FORM.html"; };
 }

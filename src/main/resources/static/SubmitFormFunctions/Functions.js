@@ -4,6 +4,150 @@ document.addEventListener('DOMContentLoaded', function() {
     AddSortingToTableHeaders(mainTable);
 });
 
+/////////////////////// Утилити
+
+function InputTodayDate(input) {
+    // Проверяем, что переданный элемент является элементом ввода и что его тип - date
+    if (input && input.tagName === 'INPUT' && input.type === 'date') {
+        // Получаем сегодняшнюю дату
+        const today = new Date();
+
+        // Форматируем дату в строку YYYY-MM-DD
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');  // Месяца считаются от 0 до 11
+        const day = String(today.getDate()).padStart(2, '0');
+
+        const formattedDate = `${year}-${month}-${day}`;
+
+        // Устанавливаем сегодняшнюю дату в input
+        input.value = formattedDate;
+    } else {
+        console.error('Передан некорректный элемент ввода или его тип не является date.');
+    }
+}
+
+function AddCheckboxColumn(table) {
+    const thead = table.querySelector('thead tr');
+    let checkboxColumnIndex = -1;
+    let checkboxColumn = thead.querySelector('th[name="checkBoxColumn"]');
+
+    // Если колонка не существует, создаем новую
+    if (!checkboxColumn) {
+        checkboxColumn = document.createElement('th');
+        checkboxColumn.setAttribute('name', 'checkBoxColumn');
+        thead.appendChild(checkboxColumn);
+        checkboxColumnIndex = thead.children.length - 1;
+    } else {
+        checkboxColumnIndex = Array.from(thead.children).indexOf(checkboxColumn);
+    }
+
+    // Добавляем или обновляем чекбоксы в каждой строке таблицы
+    const tbody = table.querySelector('tbody');
+    const rows = tbody.querySelectorAll('tr');
+
+    rows.forEach(row => {
+        // Удаляем содержимое существующей ячейки чекбокса, если оно есть
+        const existingCheckboxCell = row.children[checkboxColumnIndex];
+        if (existingCheckboxCell) {
+            existingCheckboxCell.remove();
+        }
+
+        // Создаем новую ячейку с чекбоксом
+        const newTd = document.createElement('td');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        newTd.appendChild(checkbox);
+
+        // Вставляем новую ячейку на правильное место
+        if (checkboxColumnIndex >= row.children.length) {
+            row.appendChild(newTd);
+        } else {
+            row.insertBefore(newTd, row.children[checkboxColumnIndex]);
+        }
+    });
+}
+
+function AttachInvoiceRowClick() {
+    var tables = document.getElementsByName('Накладная');
+
+    if (tables.length > 0) {
+        for (var t = 0; t < tables.length; t++) {
+            var rows = tables[t].getElementsByTagName('tr');
+
+            for (var i = 1; i < rows.length; i++) {
+                rows[i].onclick = function() {
+                    InvoiceRowClick(this);
+                };
+            }
+        }
+    } else {
+        console.log('Таблицы с name "накладная" не найдены.');
+    }
+}
+
+function InvoiceRowClick(row) {
+  // Находим элемент с id UEMenu_number
+  var ueMenuNumber = document.getElementById('UEMenu_number');
+
+  // Проверяем, что строка row и элемент UEMenu_number существуют
+  if (!row || !ueMenuNumber) {
+    console.error('Не удалось найти элемент row или UEMenu_number');
+    return;
+  }
+
+  // Извлекаем значение из первой ячейки строки
+  var firstCellText = row.cells[0].textContent;
+
+  // Помещаем значение в элемент с id UEMenu_number
+  ueMenuNumber.textContent = firstCellText;
+
+  // Находим элемент с id UEMenu_table
+  var ueMenuTable = document.getElementById('UEMenu_table');
+
+  // Проверяем, что элемент UEMenu_table существует
+  if (!ueMenuTable) {
+    console.error('Не удалось найти элемент UEMenu_table');
+    return;
+  }
+
+  // Получаем атрибут name из UEMenu_table
+  var tableName = ueMenuTable.getAttribute('name');
+
+  // Находим элемент select с id itemsPerPage
+  var itemsPerPageSelect = document.getElementById('itemsPerPage');
+
+  // Получаем значение выбранного количества строк на странице
+  var itemsPerPage = itemsPerPageSelect.value;
+
+  // Формируем JSON объект
+  var jsonData = {
+    tablename: tableName,
+    pagenumber: 1,
+    itemsperpage: itemsPerPage
+  };
+
+  // Отправляем запрос на сервер
+  fetch(`/getPage/${firstCellText}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jsonData)
+  })
+  .then(response => response.json())
+  .then(data => {
+    // Извлекаем порядок столбцов из заголовков таблицы
+    var headers = ueMenuTable.querySelectorAll('thead th');
+    var order = Array.from(headers).map(th => th.getAttribute('name'));
+
+    // Добавляем новые строки в таблицу с помощью функции ParseJsonToTable
+    ParseJsonToTable(data, ueMenuTable);
+  })
+  .catch(error => {
+    console.error('Ошибка при получении данных с сервера:', error);
+  });
+}
+
 function AddRowToTable(jsonRow, table) {
     var jsonData = (typeof jsonRow === 'string') ? JSON.parse(jsonRow) : jsonRow;
     var tableBody = table.querySelector('tbody');
@@ -3154,150 +3298,6 @@ function CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE) {
   });
 }
 
-
-
-function InputTodayDate(input) {
-    // Проверяем, что переданный элемент является элементом ввода и что его тип - date
-    if (input && input.tagName === 'INPUT' && input.type === 'date') {
-        // Получаем сегодняшнюю дату
-        const today = new Date();
-
-        // Форматируем дату в строку YYYY-MM-DD
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');  // Месяца считаются от 0 до 11
-        const day = String(today.getDate()).padStart(2, '0');
-
-        const formattedDate = `${year}-${month}-${day}`;
-
-        // Устанавливаем сегодняшнюю дату в input
-        input.value = formattedDate;
-    } else {
-        console.error('Передан некорректный элемент ввода или его тип не является date.');
-    }
-}
-
-function AddCheckboxColumn(table) {
-    const thead = table.querySelector('thead tr');
-    let checkboxColumnIndex = -1;
-    let checkboxColumn = thead.querySelector('th[name="checkBoxColumn"]');
-
-    // Если колонка не существует, создаем новую
-    if (!checkboxColumn) {
-        checkboxColumn = document.createElement('th');
-        checkboxColumn.setAttribute('name', 'checkBoxColumn');
-        thead.appendChild(checkboxColumn);
-        checkboxColumnIndex = thead.children.length - 1;
-    } else {
-        checkboxColumnIndex = Array.from(thead.children).indexOf(checkboxColumn);
-    }
-
-    // Добавляем или обновляем чекбоксы в каждой строке таблицы
-    const tbody = table.querySelector('tbody');
-    const rows = tbody.querySelectorAll('tr');
-
-    rows.forEach(row => {
-        // Удаляем содержимое существующей ячейки чекбокса, если оно есть
-        const existingCheckboxCell = row.children[checkboxColumnIndex];
-        if (existingCheckboxCell) {
-            existingCheckboxCell.remove();
-        }
-
-        // Создаем новую ячейку с чекбоксом
-        const newTd = document.createElement('td');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        newTd.appendChild(checkbox);
-
-        // Вставляем новую ячейку на правильное место
-        if (checkboxColumnIndex >= row.children.length) {
-            row.appendChild(newTd);
-        } else {
-            row.insertBefore(newTd, row.children[checkboxColumnIndex]);
-        }
-    });
-}
-
-function AttachInvoiceRowClick() {
-    var tables = document.getElementsByName('Накладная');
-
-    if (tables.length > 0) {
-        for (var t = 0; t < tables.length; t++) {
-            var rows = tables[t].getElementsByTagName('tr');
-
-            for (var i = 1; i < rows.length; i++) {
-                rows[i].onclick = function() {
-                    InvoiceRowClick(this);
-                };
-            }
-        }
-    } else {
-        console.log('Таблицы с name "накладная" не найдены.');
-    }
-}
-
-function InvoiceRowClick(row) {
-  // Находим элемент с id UEMenu_number
-  var ueMenuNumber = document.getElementById('UEMenu_number');
-
-  // Проверяем, что строка row и элемент UEMenu_number существуют
-  if (!row || !ueMenuNumber) {
-    console.error('Не удалось найти элемент row или UEMenu_number');
-    return;
-  }
-
-  // Извлекаем значение из первой ячейки строки
-  var firstCellText = row.cells[0].textContent;
-
-  // Помещаем значение в элемент с id UEMenu_number
-  ueMenuNumber.textContent = firstCellText;
-
-  // Находим элемент с id UEMenu_table
-  var ueMenuTable = document.getElementById('UEMenu_table');
-
-  // Проверяем, что элемент UEMenu_table существует
-  if (!ueMenuTable) {
-    console.error('Не удалось найти элемент UEMenu_table');
-    return;
-  }
-
-  // Получаем атрибут name из UEMenu_table
-  var tableName = ueMenuTable.getAttribute('name');
-
-  // Находим элемент select с id itemsPerPage
-  var itemsPerPageSelect = document.getElementById('itemsPerPage');
-
-  // Получаем значение выбранного количества строк на странице
-  var itemsPerPage = itemsPerPageSelect.value;
-
-  // Формируем JSON объект
-  var jsonData = {
-    tablename: tableName,
-    pagenumber: 1,
-    itemsperpage: itemsPerPage
-  };
-
-  // Отправляем запрос на сервер
-  fetch(`/getPage/${firstCellText}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(jsonData)
-  })
-  .then(response => response.json())
-  .then(data => {
-    // Извлекаем порядок столбцов из заголовков таблицы
-    var headers = ueMenuTable.querySelectorAll('thead th');
-    var order = Array.from(headers).map(th => th.getAttribute('name'));
-
-    // Добавляем новые строки в таблицу с помощью функции ParseJsonToTable
-    ParseJsonToTable(data, ueMenuTable);
-  })
-  .catch(error => {
-    console.error('Ошибка при получении данных с сервера:', error);
-  });
-}
-
 /////////////////////// DATA SOURCE
 
 function DataSourceRowClick(element, form) {
@@ -3548,3 +3548,6 @@ function EmployeeRowClick(row) {
     console.error('Ошибка при получении полномочий сотрудника:', error);
   });
 }
+
+
+
