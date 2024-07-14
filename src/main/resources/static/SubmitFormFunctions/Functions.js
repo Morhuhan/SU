@@ -6,6 +6,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
 /////////////////////// Утилити
 
+function toggleAvailability() {
+    var mainTable = document.getElementById('mainTable');
+    var showOnlyAvailable = document.getElementById('showOnlyAvailable').checked;
+    var rows = mainTable.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    // Получаем индекс столбца "В_наличии"
+    var headers = mainTable.getElementsByTagName('thead')[0].getElementsByTagName('th');
+    var availabilityIndex = -1;
+    for (var i = 0; i < headers.length; i++) {
+        if (headers[i].getAttribute('name') === 'В_наличии') {
+            availabilityIndex = i;
+            break;
+        }
+    }
+
+    if (availabilityIndex === -1) return; // Если не нашли столбец "В_наличии", выходим из функции
+
+    for (var i = 0; i < rows.length; i++) {
+        var availabilityCell = rows[i].getElementsByTagName('td')[availabilityIndex];
+        if (availabilityCell) {
+            var isAvailable = availabilityCell.style.backgroundColor.toLowerCase() !== 'red';
+            rows[i].style.display = (showOnlyAvailable && !isAvailable) ? 'none' : '';
+        }
+    }
+}
+
 function InputTodayDate(input) {
     // Проверяем, что переданный элемент является элементом ввода и что его тип - date
     if (input && input.tagName === 'INPUT' && input.type === 'date') {
@@ -2581,18 +2607,6 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalDispatchUE) 
   // Инициализируем массив для хранения данных строк
   const data = [];
 
-  // Получаем заголовок модального окна
-  const modalTitle = modal.querySelector('h1').textContent;
-
-  // Извлекаем число из заголовка с помощью регулярного выражения
-  const serialNumberMatch = modalTitle.match(/№\s*(\d+)/);
-  const serialNumber = serialNumberMatch ? serialNumberMatch[1] : null;
-
-  // Добавляем серийный номер в данные
-  if (serialNumber) {
-    data['Серийный_номер'] = serialNumber;
-  }
-
   // Проходим по всем строкам таблицы
   rows.forEach(row => {
     const checkbox = row.querySelector('input[type="checkbox"]');
@@ -2640,8 +2654,7 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalDispatchUE) 
         });
       }
 
-      CreateDispatchInvoice(modalInvoice, dispatchModal, modalDispatchUE)
-
+      CreateDispatchInvoice(modalInvoice, dispatchModal, modalDispatchUE);
     })
     .catch(error => {
       console.error('There has been a problem with your fetch operation:', error);
@@ -2649,7 +2662,7 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalDispatchUE) 
     });
 }
 
-function CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE) {
+function CreateDispatchInvoice(modalInvoice, dispatchModal, modalDispatchUE) {
   // Считываем значения инпутов из modalInvoice
   const invoiceEmployeeInput = modalInvoice.querySelector('#invoiceEmployee');
   const invoiceDateInput = modalInvoice.querySelector('#invoiceDate');
@@ -2695,80 +2708,92 @@ function CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE) {
     console.log('Invoice Data Success:', data);
     const invoiceNumber = data["Номер_накладной"];
 
-    // Находим таблицу movingTable
-    const movingTable = modalMovingUE.querySelector('#movingTable');
-    if (!movingTable) {
-      alert('Ошибка: Не удалось найти таблицу movingTable.');
+    // Переходим к обработке таблицы dispatchTable
+    const dispatchTable = modalDispatchUE.querySelector('#dispatchTable');
+    if (!dispatchTable) {
+      alert('Ошибка: Не удалось найти таблицу dispatchTable.');
       return;
     }
 
-    // Находим выбранную строку
-    const selectedRow = movingTable.querySelector('tr.selected');
-    if (!selectedRow) {
-      alert('Ошибка: Не выбрана строка в таблице movingTable.');
-      return;
-    }
-
-    // Находим индекс столбца с заголовком "Серийный_номер"
-    const headers = Array.from(movingTable.querySelectorAll('thead th'));
+    // Находим индекс столбца с заголовком, имеющим атрибут name="checkBoxColumn"
+    const headers = Array.from(dispatchTable.querySelectorAll('thead th'));
+    const checkBoxColumnIndex = headers.findIndex(th => th.getAttribute('name') === 'checkBoxColumn');
     const serialNumberColumnIndex = headers.findIndex(th => th.getAttribute('name') === 'Серийный_номер');
+
+    if (checkBoxColumnIndex === -1) {
+      alert('Ошибка: Не удалось найти столбец "checkBoxColumn" в таблице.');
+      return;
+    }
 
     if (serialNumberColumnIndex === -1) {
       alert('Ошибка: Не удалось найти столбец "Серийный_номер" в таблице.');
       return;
     }
 
-    // Получаем серийный номер из выбранной строки
-    const serialNumber = selectedRow.cells[serialNumberColumnIndex].textContent.trim();
-
-    if (!serialNumber) {
-      alert('Ошибка: Не удалось получить серийный номер из выбранной строки.');
-      return;
-    }
-
-    const dataForUEInvoice = {
-      "Серийный_номер": serialNumber,
-      "Номер_накладной": invoiceNumber
-    };
-
+    // Формируем JSON для каждой строки таблицы с отмеченным чекбоксом и отправляем его
+    const rows = Array.from(dispatchTable.querySelectorAll('tbody tr'));
     const encodedUEInvoiceWord = encodeURIComponent('УЕ_Накладная');
 
-    // Отправляем данные в таблицу УЕ_Накладная
-    return fetch(`/addData/${encodedUEInvoiceWord}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(dataForUEInvoice)
-    });
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(errData => {
-        throw new Error(errData.error || 'Network response was not ok');
+    const rowPromises = rows.map(row => {
+      const cells = row.querySelectorAll('td');
+      const checkBox = cells[checkBoxColumnIndex].querySelector('input[type="checkbox"]');
+
+      if (!checkBox || !checkBox.checked) {
+        console.warn('Внимание: Строка без отмеченного чекбокса, пропускаем её.');
+        return Promise.resolve(); // Пропускаем эту строку, чтобы не прерывать весь процесс
+      }
+
+      const serialNumber = cells[serialNumberColumnIndex].textContent.trim();
+
+      if (!serialNumber) {
+        console.warn('Внимание: Пустой серийный номер в строке, пропускаем её.');
+        return Promise.resolve(); // Пропускаем эту строку, чтобы не прерывать весь процесс
+      }
+
+      const dataForUEInvoice = {
+        "Серийный_номер": serialNumber,
+        "Номер_накладной": invoiceNumber
+      };
+
+      // Отправляем данные по каждой строке таблицы с отмеченным чекбоксом
+      return fetch(`/addData/${encodedUEInvoiceWord}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataForUEInvoice)
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(errData => {
+            throw new Error(errData.error || 'Network response was not ok');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Row Data Success:', data);
+      })
+      .catch(error => {
+        alert('Ошибка при отправке данных УЕ: ' + error.message);
       });
-    }
-    return response.json();
+    });
+
+    // Ждем завершения всех запросов
+    return Promise.all(rowPromises);
   })
-  .then(data => {
-    console.log('UE_Invoice Data Success:', data);
-    alert('Накладная и данные УЕ успешно созданы.');
-
-    // Закрываем все модальные окна
+  .then(() => {
+    alert('Все данные успешно отправлены.');
     CloseModal(modalInvoice);
-    CloseModal(modalMoving);
-    CloseModal(modalMovingUE);
-
-    // Обновляем страницу или выполняем другие необходимые действия
+    CloseModal(dispatchModal);
+    CloseModal(modalDispatchUE);
     GetPageFromTable(1);
   })
   .catch(error => {
-    alert('Ошибка при создании накладной или данных УЕ: ' + error.message);
-
-    // Закрываем все модальные окна даже в случае ошибки
+    alert('Ошибка при создании накладной: ' + error.message);
     CloseModal(modalInvoice);
-    CloseModal(modalMoving);
-    CloseModal(modalMovingUE);
+    CloseModal(dispatchModal);
+    CloseModal(modalDispatchUE);
   });
 }
 
