@@ -95,6 +95,12 @@ public class MainRestController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/movingUE")
+    public ResponseEntity<?> movingUE(@RequestBody JsonNode jsonNode) {
+        dao.movingUE(jsonNode);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/editData/{tableName}")
     public ResponseEntity<?> editData(
             @PathVariable("tableName") String tableName,

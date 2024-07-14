@@ -525,12 +525,16 @@ button:hover {
     width: 350px;
 }
 
-#modalReceipt, dispatchModal, movingModal {
+#modalReceipt, #modalDispatch, #modalMoving {
     z-index: 200;
 }
 
-#modalReceiptUE {
+#modalReceiptUE, #modalDispatchUE, #modalMovingUE {
     z-index: 300;
+}
+
+#modalMovingUESubmit {
+    z-index: 400;
 }
 
 #modalReceipt {
@@ -571,6 +575,11 @@ button:hover {
 #receiptTable tr.selected {
     cursor: default;
     background-color: #e0e0e0;
+}
+
+#dispatchTable tr.selected {
+    cursor: default;
+    background-color: WHITE;
 }
 
 #receiptTable tr {

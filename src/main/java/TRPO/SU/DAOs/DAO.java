@@ -89,6 +89,12 @@ public class DAO {
         jdbcTemplate.update(sql, jsonString);
     }
 
+    public void movingUE(JsonNode jsonNode) throws DataAccessException {
+        String jsonString = jsonNode.toString();
+        String sql = "CALL переместить_УЕ(?::jsonb)";
+        jdbcTemplate.update(sql, jsonString);
+    }
+
     public void checkPowers(JsonNode jsonNode) throws DataAccessException {
         String jsonString = jsonNode.toString();
         String sql = "CALL проверить_полномочие(?::jsonb)";

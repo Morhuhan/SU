@@ -336,7 +336,18 @@ function UpdateNavigationPanel() {
 function TableRowClick() {
     // Убираем выделение со всех строк таблицы
     var tableRows = document.querySelectorAll('#mainTable tr');
+    var tableRowsMoving = document.querySelectorAll('#movingTable tr');
+    var tableRowsDispatch = document.querySelectorAll('#modalDispatchUE tr');
+
     tableRows.forEach(function(row) {
+        row.classList.remove("selected");
+    });
+
+    tableRowsMoving.forEach(function(row) {
+        row.classList.remove("selected");
+    });
+
+    tableRowsDispatch.forEach(function(row) {
         row.classList.remove("selected");
     });
 
@@ -840,6 +851,14 @@ function ModalDataSourceRowClick(input, row, table, modal, mainModal) {
     CloseModal(modal);
 
     BlockElementInput(mainModal);
+
+    // Создаем и диспатчим событие change
+    const changeEvent = new Event('change', {
+        bubbles: true,
+        cancelable: true,
+    });
+
+    input.dispatchEvent(changeEvent);
 }
 
 /////////////////////// УДАЛЕНИЕ/ИЗМЕНЕНИЕ/СОЗДАНИЕ
@@ -1659,6 +1678,8 @@ function DeleteSelectedRow(table) {
 
 /////////////////////// СОЗДАНИЕ УЕ (новое)
 
+// Накладная
+
 async function CheckEmployeePowers(employeeId, authorityName) {
   const authorityCheckData = {
     employeeId,
@@ -1821,6 +1842,8 @@ function ModalInvoiceSubmitClick(modalInvoice) {
         console.error('Неизвестный тип накладной: ' + invoiceType);
     }
 }
+
+// Поступление
 
 function ModalCreateReceipt(modalInvoice) {
   // Создаем модальное окно
@@ -2181,7 +2204,10 @@ function CreateReceiptInvoice(modalInvoice, receiptModal, modalReceiptUE) {
   });
 }
 
+// Отправка
+
 function ModalCreateDispatch(invoiceModal) {
+
   // Создаем модальное окно
   const dispatchModal = document.createElement('div');
   dispatchModal.id = 'modalDispatch';
@@ -2204,9 +2230,24 @@ function ModalCreateDispatch(invoiceModal) {
   const senderInput = document.createElement('input');
   senderInput.type = 'text';
   senderInput.id = 'dispatchSender';
-  senderInput.setAttribute('name', 'dispatchSender');
   senderInputContainer.appendChild(senderLabel);
   senderInputContainer.appendChild(senderInput);
+
+  senderInput.setAttribute('name', 'Номер_сотрудника');
+  senderInput.setAttribute('data-source', 'Сотрудник');
+  senderInput.setAttribute('autocomplete', 'off');
+  senderInput.setAttribute('readonly', true);
+  senderInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+  senderInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+  senderInput.setAttribute('data-input-order', '0');
+  senderInput.onfocus = function() {
+      DataSourceRowClick(this);
+  };
+  senderInput.addEventListener('change', function() {
+    BlockElementInput(dispatchModal);
+  });
+
+
   dispatchModal.appendChild(senderInputContainer);
 
   // Создаем инпут для ответственного представителя
@@ -2222,6 +2263,20 @@ function ModalCreateDispatch(invoiceModal) {
   responsibleInputContainer.appendChild(responsibleInput);
   dispatchModal.appendChild(responsibleInputContainer);
 
+  responsibleInput.setAttribute('name', 'Номер_представителя');
+  responsibleInput.setAttribute('data-source', 'Представитель');
+  responsibleInput.setAttribute('autocomplete', 'off');
+  responsibleInput.setAttribute('readonly', true);
+  responsibleInput.setAttribute('data-columns-order', 'Номер_представителя, Имя, Фамилия, Отчество');
+  responsibleInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+  responsibleInput.setAttribute('data-input-order', '1');
+  responsibleInput.onfocus = function() {
+      DataSourceRowClick(this);
+  };
+  responsibleInput.addEventListener('change', function() {
+    BlockElementInput(dispatchModal);
+  });
+
   // Создаем контейнер для кнопок
   const buttonsContainer = document.createElement('div');
   buttonsContainer.setAttribute('class', 'container_buttons');
@@ -2234,7 +2289,7 @@ function ModalCreateDispatch(invoiceModal) {
     try {
       const hiddenValue = senderInput.getAttribute('data-hidden');
       await CheckEmployeePowers(hiddenValue, 'Может_инициировать_акт_отправки');
-      ModalCreateDispatchUE(invoiceModal);
+      ModalCreateDispatchUE(invoiceModal, dispatchModal);
     } catch (error) {
       CloseModal(dispatchModal);
     }
@@ -2253,6 +2308,8 @@ function ModalCreateDispatch(invoiceModal) {
 
   // Добавляем контейнер с кнопками в модальное окно
   dispatchModal.appendChild(buttonsContainer);
+
+  BlockElementInput(dispatchModal);
 }
 
 function ModalCreateDispatchUE(modalInvoice, dispatchModal) {
@@ -2261,6 +2318,8 @@ function ModalCreateDispatchUE(modalInvoice, dispatchModal) {
   dispatchUEModal.id = 'modalDispatchUE';
   dispatchUEModal.setAttribute('class', 'modal');
   document.body.appendChild(dispatchUEModal);
+
+  CreateOverlay(modalDispatchUE);
 
   // Создаем контейнер для верхней части модального окна
   const topContainer = document.createElement('div');
@@ -2279,6 +2338,7 @@ function ModalCreateDispatchUE(modalInvoice, dispatchModal) {
   const table = document.createElement('table');
   table.id = 'dispatchTable';
   table.setAttribute('name', 'Учетная_единица');
+  table.setAttribute('class', 'table');
 
   // Копируем шапку таблицы из UEMenu_table
   const UEMenuTable = document.getElementById('UEMenu_table');
@@ -2343,11 +2403,13 @@ function ModalCreateDispatchUE(modalInvoice, dispatchModal) {
     .then(result => {
       if (result.length === 0) {
         alert('Не найдено записей');
+        CloseModal(dispatchUEModal);
+        return;
       } else {
         result.forEach(jsonRow => {
           AddRowToTable(jsonRow, table);
         });
-        SortTable(table, 0); // Предполагается, что есть функция для сортировки таблицы
+        SortTable(table, 0);
         AddCheckboxColumn(table);
       }
     })
@@ -2357,9 +2419,9 @@ function ModalCreateDispatchUE(modalInvoice, dispatchModal) {
     });
 }
 
-function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalReceiptUE) {
+function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalDispatchUE) {
   // Находим таблицу dispatchTable внутри modalReceiptUE
-  const dispatchTable = modalReceiptUE.querySelector('#dispatchTable');
+  const dispatchTable = modalDispatchUE.querySelector('#dispatchTable');
 
   if (!dispatchTable) {
     console.error('Таблица dispatchTable не найдена');
@@ -2374,6 +2436,18 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalReceiptUE) {
 
   // Инициализируем массив для хранения данных строк
   const data = [];
+
+  // Получаем заголовок модального окна
+  const modalTitle = modal.querySelector('h1').textContent;
+
+  // Извлекаем число из заголовка с помощью регулярного выражения
+  const serialNumberMatch = modalTitle.match(/№\s*(\d+)/);
+  const serialNumber = serialNumberMatch ? serialNumberMatch[1] : null;
+
+  // Добавляем серийный номер в данные
+  if (serialNumber) {
+    data['Серийный_номер'] = serialNumber;
+  }
 
   // Проходим по всем строкам таблицы
   rows.forEach(row => {
@@ -2421,6 +2495,9 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalReceiptUE) {
           throw new Error(errData.error || 'Network response was not ok');
         });
       }
+
+      CreateDispatchInvoice(modalInvoice, dispatchModal, modalDispatchUE)
+
     })
     .catch(error => {
       console.error('There has been a problem with your fetch operation:', error);
@@ -2428,7 +2505,7 @@ function ModalDispatchSubmitClick(modalInvoice, dispatchModal, modalReceiptUE) {
     });
 }
 
-function CreateDispatchInvoice(modalInvoice, dispatchModal, modalReceiptUE) {
+function CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE) {
   // Считываем значения инпутов из modalInvoice
   const invoiceEmployeeInput = modalInvoice.querySelector('#invoiceEmployee');
   const invoiceDateInput = modalInvoice.querySelector('#invoiceDate');
@@ -2474,103 +2551,99 @@ function CreateDispatchInvoice(modalInvoice, dispatchModal, modalReceiptUE) {
     console.log('Invoice Data Success:', data);
     const invoiceNumber = data["Номер_накладной"];
 
-    // Переходим к обработке таблицы dispatchTable
-    const dispatchTable = dispatchModal.querySelector('#dispatchTable');
-    if (!dispatchTable) {
-      alert('Ошибка: Не удалось найти таблицу dispatchTable.');
+    // Находим таблицу movingTable
+    const movingTable = modalMovingUE.querySelector('#movingTable');
+    if (!movingTable) {
+      alert('Ошибка: Не удалось найти таблицу movingTable.');
       return;
     }
 
-    // Находим индекс столбца с заголовком, имеющим атрибут name="checkBoxColumn"
-    const headers = Array.from(dispatchTable.querySelectorAll('thead th'));
-    const checkBoxColumnIndex = headers.findIndex(th => th.getAttribute('name') === 'checkBoxColumn');
-
-    if (checkBoxColumnIndex === -1) {
-      alert('Ошибка: Не удалось найти столбец "checkBoxColumn" в таблице.');
+    // Находим выбранную строку
+    const selectedRow = movingTable.querySelector('tr.selected');
+    if (!selectedRow) {
+      alert('Ошибка: Не выбрана строка в таблице movingTable.');
       return;
     }
 
-    // Формируем JSON для каждой строки таблицы с отмеченным чекбоксом и отправляем его
-    const rows = Array.from(dispatchTable.querySelectorAll('tbody tr'));
+    // Находим индекс столбца с заголовком "Серийный_номер"
+    const headers = Array.from(movingTable.querySelectorAll('thead th'));
+    const serialNumberColumnIndex = headers.findIndex(th => th.getAttribute('name') === 'Серийный_номер');
+
+    if (serialNumberColumnIndex === -1) {
+      alert('Ошибка: Не удалось найти столбец "Серийный_номер" в таблице.');
+      return;
+    }
+
+    // Получаем серийный номер из выбранной строки
+    const serialNumber = selectedRow.cells[serialNumberColumnIndex].textContent.trim();
+
+    if (!serialNumber) {
+      alert('Ошибка: Не удалось получить серийный номер из выбранной строки.');
+      return;
+    }
+
+    const dataForUEInvoice = {
+      "Серийный_номер": serialNumber,
+      "Номер_накладной": invoiceNumber
+    };
+
     const encodedUEInvoiceWord = encodeURIComponent('УЕ_Накладная');
 
-    const rowPromises = rows.map(row => {
-      const cells = row.querySelectorAll('td');
-      const checkBox = cells[checkBoxColumnIndex].querySelector('input[type="checkbox"]');
-
-      if (!checkBox || !checkBox.checked) {
-        console.warn('Внимание: Строка без отмеченного чекбокса, пропускаем её.');
-        return Promise.resolve(); // Пропускаем эту строку, чтобы не прерывать весь процесс
-      }
-
-      const serialNumber = row.querySelector('td[name="Серийный_номер"]').textContent.trim();
-
-      if (!serialNumber) {
-        console.warn('Внимание: Пустой серийный номер в строке, пропускаем её.');
-        return Promise.resolve(); // Пропускаем эту строку, чтобы не прерывать весь процесс
-      }
-
-      const dataForUEInvoice = {
-        "Серийный_номер": serialNumber,
-        "Номер_накладной": invoiceNumber
-      };
-
-      // Отправляем данные по каждой строке таблицы с отмеченным чекбоксом
-      return fetch(`/addData/${encodedUEInvoiceWord}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(dataForUEInvoice)
-      })
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(errData => {
-            throw new Error(errData.error || 'Network response was not ok');
-          });
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Row Data Success:', data);
-      })
-      .catch(error => {
-        alert('Ошибка при отправке данных УЕ: ' + error.message);
-      });
+    // Отправляем данные в таблицу УЕ_Накладная
+    return fetch(`/addData/${encodedUEInvoiceWord}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataForUEInvoice)
     });
-
-    // Ждем завершения всех запросов
-    return Promise.all(rowPromises);
   })
-  .then(() => {
-    alert('Все данные успешно отправлены.');
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(errData => {
+        throw new Error(errData.error || 'Network response was not ok');
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('UE_Invoice Data Success:', data);
+    alert('Накладная и данные УЕ успешно созданы.');
+
+    // Закрываем все модальные окна
     CloseModal(modalInvoice);
-    CloseModal(dispatchModal);
-    CloseModal(modalReceiptUE);
+    CloseModal(modalMoving);
+    CloseModal(modalMovingUE);
+
+    // Обновляем страницу или выполняем другие необходимые действия
     GetPageFromTable(1);
   })
   .catch(error => {
-    alert('Ошибка при создании накладной: ' + error.message);
+    alert('Ошибка при создании накладной или данных УЕ: ' + error.message);
+
+    // Закрываем все модальные окна даже в случае ошибки
     CloseModal(modalInvoice);
-    CloseModal(dispatchModal);
-    CloseModal(modalReceiptUE);
+    CloseModal(modalMoving);
+    CloseModal(modalMovingUE);
   });
 }
 
+// Перемещение
+
 function ModalCreateMoving(invoiceModal) {
   // Создаем модальное окно
-  const modal = document.createElement('div');
-  movingModal.id = 'modalMoving';
-  movingModal.setAttribute('class', 'modal');
-  document.body.appendChild(movingModal);
+  const modalMoving = document.createElement('div');
+  modalMoving.id = 'modalMoving';
+  modalMoving.setAttribute('class', 'modal');
+  document.body.appendChild(modalMoving);
 
   // Создаем оверлей
-  CreateOverlay(movingModal);
+  CreateOverlay(modalMoving);
 
   // Создаем заголовок
   const h1 = document.createElement('h1');
   h1.textContent = 'Перемещение';
-  movingModal.appendChild(h1);
+  modalMoving.appendChild(h1);
 
   // Создаем инпут для инициирующего сотрудника
   const initiatorInputContainer = document.createElement('div');
@@ -2583,7 +2656,22 @@ function ModalCreateMoving(invoiceModal) {
   initiatorInput.setAttribute('name', 'movingInitiator');
   initiatorInputContainer.appendChild(initiatorLabel);
   initiatorInputContainer.appendChild(initiatorInput);
-  movingModal.appendChild(initiatorInputContainer);
+
+  initiatorInput.setAttribute('name', 'Номер_сотрудника');
+  initiatorInput.setAttribute('data-source', 'Сотрудник');
+  initiatorInput.setAttribute('autocomplete', 'off');
+  initiatorInput.setAttribute('readonly', true);
+  initiatorInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+  initiatorInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+  initiatorInput.setAttribute('data-input-order', '0');
+  initiatorInput.onfocus = function() {
+      DataSourceRowClick(this);
+  };
+  initiatorInput.addEventListener('change', function() {
+    BlockElementInput(modalMoving);
+  });
+
+  modalMoving.appendChild(initiatorInputContainer);
 
   // Создаем инпут для принимающего сотрудника
   const receiverInputContainer = document.createElement('div');
@@ -2596,7 +2684,22 @@ function ModalCreateMoving(invoiceModal) {
   receiverInput.setAttribute('name', 'movingReceiver');
   receiverInputContainer.appendChild(receiverLabel);
   receiverInputContainer.appendChild(receiverInput);
-  movingModal.appendChild(receiverInputContainer);
+
+  receiverInput.setAttribute('name', 'Номер_сотрудника');
+  receiverInput.setAttribute('data-source', 'Сотрудник');
+  receiverInput.setAttribute('autocomplete', 'off');
+  receiverInput.setAttribute('readonly', true);
+  receiverInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
+  receiverInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
+  receiverInput.setAttribute('data-input-order', '0');
+  receiverInput.onfocus = function() {
+      DataSourceRowClick(this);
+  };
+  receiverInput.addEventListener('change', function() {
+    BlockElementInput(modalMoving);
+  });
+
+  modalMoving.appendChild(receiverInputContainer);
 
   // Создаем контейнер для кнопок
   const buttonsContainer = document.createElement('div');
@@ -2614,9 +2717,9 @@ function ModalCreateMoving(invoiceModal) {
       await CheckEmployeePowers(initiatorId, 'Может_начать_акт_перемещения');
       await CheckEmployeePowers(receiverId, 'Может_завершить_акт_перемещения');
 
-      ModalInvoiceSubmitClick(invoiceModal);
+      ModalCreateMovingUE(invoiceModal, modalMoving);
     } catch (error) {
-      CloseModal(movingModal);
+      CloseModal(modalMoving);
     }
   });
 
@@ -2625,19 +2728,431 @@ function ModalCreateMoving(invoiceModal) {
   closeButton.setAttribute('class', 'redButton');
   closeButton.textContent = 'Закрыть';
   closeButton.addEventListener('click', function () {
-    CloseModal(movingModal);
+    CloseModal(modalMoving);
   });
 
   buttonsContainer.appendChild(createButton);
   buttonsContainer.appendChild(closeButton);
 
   // Добавляем контейнер с кнопками в модальное окно
-  movingModal.appendChild(buttonsContainer);
+  modalMoving.appendChild(buttonsContainer);
 }
 
+function ModalCreateMovingUE(modalInvoice, modalMoving) {
+  // Создаем модальное окно
+  const modalMovingUE = document.createElement('div');
+  modalMovingUE.id = 'modalMovingUE';
+  modalMovingUE.setAttribute('class', 'modal');
+  document.body.appendChild(modalMovingUE);
 
+  CreateOverlay(modalMovingUE); // Исправлено с modalDispatchUE на modalMovingUE
 
+  // Создаем контейнер для верхней части модального окна
+  const topContainer = document.createElement('div');
+  topContainer.setAttribute('class', 'modal-top-container');
 
+  // Создаем заголовок h1 для нового модального окна
+  const h1 = document.createElement('h1');
+  h1.textContent = 'Перемещение Учетных Единиц';
+  h1.id = 'receipth1';
+  topContainer.appendChild(h1);
+
+  // Создаем кнопку "Переместить"
+  const createButton = document.createElement('button');
+  createButton.textContent = 'Переместить';
+  createButton.className = 'greenButton';
+  createButton.addEventListener('click', function () {
+    ModalCreateMovingClick(modalInvoice, modalMoving, modalMovingUE);
+  });
+  topContainer.appendChild(createButton);
+
+  // Добавляем верхний контейнер в модальное окно
+  modalMovingUE.appendChild(topContainer);
+
+  // Создаем таблицу
+  const table = document.createElement('table');
+  table.id = 'movingTable';
+  table.setAttribute('name', 'Учетная_единица');
+  table.setAttribute('class', 'table');
+
+  // Копируем шапку таблицы из UEMenu_table
+  const UEMenuTable = document.getElementById('UEMenu_table');
+  if (UEMenuTable) {
+    const tableHead = UEMenuTable.querySelector('thead');
+    if (tableHead) {
+      table.appendChild(tableHead.cloneNode(true));
+    }
+  }
+
+  // Добавляем пустое tbody в таблицу
+  const tbody = document.createElement('tbody');
+  table.appendChild(tbody);
+
+  // Добавляем таблицу в модальное окно
+  modalMovingUE.appendChild(table);
+
+  // Создаем контейнер для кнопок
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.setAttribute('class', 'container_buttons');
+
+  // Создаем кнопку "Закрыть"
+  const closeButton = document.createElement('button');
+  closeButton.setAttribute('class', 'redButton');
+  closeButton.textContent = 'Закрыть';
+  closeButton.addEventListener('click', function () {
+    CloseModal(modalMovingUE);
+  });
+
+  // Добавляем кнопки в контейнер
+  buttonsContainer.appendChild(closeButton);
+
+  // Добавляем контейнер с кнопками в модальное окно
+  modalMovingUE.appendChild(buttonsContainer);
+
+  // Получаем данные с сервера и заполняем таблицу
+  const url = '/getAllUE';
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: null
+  })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errData => {
+          throw new Error(errData.error || 'Network response was not ok');
+        });
+      }
+      return response.json();
+    })
+    .then(result => {
+      if (result.length === 0) {
+        alert('Не найдено записей');
+        CloseModal(modalMovingUE);
+        return;
+      } else {
+        result.forEach(jsonRow => {
+          AddRowToTable(jsonRow, table);
+        });
+        SortTable(table, 0);
+      }
+    })
+    .catch(error => {
+      console.error('There has been a problem with your fetch operation:', error);
+      alert(error.message);
+    });
+}
+
+function ModalCreateMovingClick(modalInvoice, modalMoving, modalMovingUE) {
+  // Находим таблицу в модальном окне modalMovingUE
+  const table = modalMovingUE.querySelector('table');
+
+  if (!table) {
+    console.error('Таблица не найдена в модальном окне');
+    return;
+  }
+
+  // Находим выбранную строку с классом "selected"
+  const selectedRow = table.querySelector('tbody tr.selected');
+
+  if (!selectedRow) {
+    alert('Пожалуйста, выберите строку для перемещения.');
+    return;
+  }
+
+  // Извлекаем данные из выбранной строки
+  const cells = selectedRow.querySelectorAll('td');
+  const headers = table.querySelectorAll('thead th');
+
+  // Найдем индекс колонки "Серийный_номер"
+  let serialNumber = '';
+  headers.forEach((header, index) => {
+    if (header.getAttribute('name') === 'Серийный_номер') {
+      serialNumber = cells[index].textContent;
+    }
+  });
+
+  // Создаем новое модальное окно для перемещения УЕ
+  const modal = document.createElement('div');
+  modal.id = 'modalMovingUESubmit';
+  modal.setAttribute('class', 'modal');
+  document.body.appendChild(modal);
+
+  // Создаем оверлей
+  CreateOverlay(modal);
+
+  // Создаем заголовок
+  const h1 = document.createElement('h1');
+  h1.textContent = `Перемещение УЕ № ${serialNumber}`;
+  modal.appendChild(h1);
+
+  let zbmInput, buildingInput, roomInput;
+
+  // Проходим по каждому заголовку и создаем соответствующие элементы
+  headers.forEach((header, index) => {
+    // Создаем элементы только для указанных полей
+    const editableFields = ['Номер_ЗБМ', 'Номер_здания', 'Номер_помещения'];
+    if (editableFields.includes(header.getAttribute('name'))) {
+      if (index >= cells.length) {
+        return;
+      }
+
+      const label = document.createElement('label');
+      label.textContent = header.textContent + ': ';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = header.getAttribute('name');
+      input.setAttribute('name', header.getAttribute('name'));
+      input.value = cells[index].textContent;
+
+      // Устанавливаем атрибут data-value из ячейки
+      input.setAttribute('data-value', cells[index].getAttribute('data-value') || '');
+
+      input.setAttribute('autocomplete', 'off');
+
+      // Копируем все атрибуты из заголовка в input
+      Array.from(header.attributes).forEach(attr => {
+        input.setAttribute(attr.name, attr.value);
+      });
+
+      // Добавляем обработчик события onfocus для редактируемых полей
+      input.onfocus = function() {
+        DataSourceClick(this, modal);
+      };
+
+      // Сохраняем ссылки на редактируемые поля
+      if (input.getAttribute('name') === 'Номер_ЗБМ') zbmInput = input;
+      if (input.getAttribute('name') === 'Номер_здания') buildingInput = input;
+      if (input.getAttribute('name') === 'Номер_помещения') roomInput = input;
+
+      // Добавляем обработчик события onchange
+      input.onchange = function() {
+        if (this.getAttribute('name') === 'Номер_ЗБМ') {
+          if (buildingInput) buildingInput.value = '';
+          if (roomInput) roomInput.value = '';
+        } else if (this.getAttribute('name') === 'Номер_здания') {
+          if (roomInput) roomInput.value = '';
+        }
+
+        BlockElementInput(modalMovingUESubmit);
+      };
+
+      // Создаем контейнер для label и input
+      const inputContainer = document.createElement('div');
+      inputContainer.classList.add('inputContainer');
+      inputContainer.appendChild(label);
+      inputContainer.appendChild(input);
+
+      // Добавляем inputContainer в модальное окно
+      modal.appendChild(inputContainer);
+    }
+  });
+
+  // Создаем контейнер для кнопок
+  const buttonsContainer = document.createElement('div');
+  buttonsContainer.setAttribute('class', 'container_buttons');
+
+  // Создаем кнопку "Отправить"
+  const sendButton = document.createElement('button');
+  sendButton.textContent = 'Отправить';
+  sendButton.className = 'greenButton';
+  sendButton.addEventListener('click', function () {
+    ModalSubmitMovingClick(modal, modalInvoice, modalMoving, modalMovingUE);
+  });
+
+  // Создаем кнопку "Закрыть"
+  const closeButton = document.createElement('button');
+  closeButton.setAttribute('class', 'redButton');
+  closeButton.textContent = 'Закрыть';
+  closeButton.addEventListener('click', function () {
+    CloseModal(modal);
+  });
+
+  buttonsContainer.appendChild(sendButton);
+  buttonsContainer.appendChild(closeButton);
+
+  // Добавляем контейнер с кнопками в модальное окно
+  modal.appendChild(buttonsContainer);
+}
+
+function ModalSubmitMovingClick(modalMovingUESubmit, modalInvoice, modalMoving, modalMovingUE) {
+  // Собираем все инпуты внутри модального окна
+  const inputs = modalMovingUESubmit.querySelectorAll('input');
+
+  // Формируем JSON объект из атрибутов name и data-value инпутов
+  const data = {};
+  inputs.forEach(input => {
+    const name = input.getAttribute('name');
+    const value = input.getAttribute('data-value') || '';
+    if (name) {
+      data[name] = value;
+    }
+  });
+
+  // Получаем заголовок модального окна
+  const header = modalMovingUESubmit.querySelector('h1');
+  if (header) {
+    // Извлекаем серийный номер из заголовка
+    const headerText = header.textContent;
+    const match = headerText.match(/№\s*(\d+)/);
+    if (match && match[1]) {
+      // Добавляем серийный номер в объект data
+      data['Серийный_номер'] = match[1];
+    }
+  }
+
+  // URL для отправки данных
+  const url = '/movingUE';
+
+  // Отправляем данные на сервер с помощью fetch
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errData => {
+          throw new Error(errData.error || 'Network response was not ok');
+        });
+      }
+
+      CloseModal(modalMovingUESubmit);
+      CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE);
+    })
+    .catch(error => {
+      console.error('There has been a problem with your fetch operation:', error);
+      alert(error.message);
+    });
+}
+
+function CreateMovingInvoice(modalInvoice, modalMoving, modalMovingUE) {
+  // Считываем значения инпутов из modalInvoice
+  const invoiceEmployeeInput = modalInvoice.querySelector('#invoiceEmployee');
+  const invoiceDateInput = modalInvoice.querySelector('#invoiceDate');
+
+  if (!invoiceEmployeeInput || !invoiceDateInput) {
+    alert('Ошибка: Не удалось найти необходимые поля в модальном окне накладной.');
+    return;
+  }
+
+  const invoiceEmployeeNumberValue = invoiceEmployeeInput.getAttribute('data-hidden');
+  const invoiceDateValue = invoiceDateInput.value.trim();
+
+  // Проверяем, что значения не пусты
+  if (!invoiceEmployeeNumberValue || !invoiceDateValue) {
+    alert('Ошибка: Пожалуйста, заполните все поля накладной.');
+    return;
+  }
+
+  const dataForInvoice = {
+    "Дата_подписания": invoiceDateValue,
+    "Номер_сотрудника": invoiceEmployeeNumberValue
+  };
+
+  const encodedInvoiceWord = encodeURIComponent('Накладная');
+
+  // Отправляем fetch запрос для накладной
+  fetch(`/addData/${encodedInvoiceWord}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(dataForInvoice)
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(errData => {
+        throw new Error(errData.error || 'Network response was not ok');
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Invoice Data Success:', data);
+    const invoiceNumber = data["Номер_накладной"];
+
+    // Переходим к обработке таблицы movingTable
+    const movingTable = modalMovingUE.querySelector('#movingTable');
+    if (!movingTable) {
+      alert('Ошибка: Не удалось найти таблицу movingTable.');
+      return;
+    }
+
+    // Находим индекс столбца с заголовком, имеющим атрибут name="Серийный_номер"
+    const headers = Array.from(movingTable.querySelectorAll('thead th'));
+    const serialNumberColumnIndex = headers.findIndex(th => th.getAttribute('name') === 'Серийный_номер');
+
+    if (serialNumberColumnIndex === -1) {
+      alert('Ошибка: Не удалось найти столбец "Серийный_номер" в таблице.');
+      return;
+    }
+
+    // Находим строку с классом selected
+    const selectedRow = movingTable.querySelector('tbody tr.selected');
+    if (!selectedRow) {
+      alert('Ошибка: Не удалось найти строку с классом "selected" в таблице.');
+      return;
+    }
+
+    // Получаем серийный номер из выбранной строки
+    const cells = selectedRow.querySelectorAll('td');
+    const serialNumber = cells[serialNumberColumnIndex].textContent.trim();
+
+    if (!serialNumber) {
+      alert('Ошибка: Пустой серийный номер в выбранной строке.');
+      return;
+    }
+
+    const dataForUEInvoice = {
+      "Серийный_номер": serialNumber,
+      "Номер_накладной": invoiceNumber
+    };
+
+    const encodedUEInvoiceWord = encodeURIComponent('УЕ_Накладная');
+
+    // Отправляем данные по выбранной строке таблицы
+    return fetch(`/addData/${encodedUEInvoiceWord}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataForUEInvoice)
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errData => {
+          throw new Error(errData.error || 'Network response was not ok');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Row Data Success:', data);
+      alert('Все данные успешно отправлены.');
+      CloseModal(modalInvoice);
+      CloseModal(modalMoving);
+      CloseModal(modalMovingUE);
+      GetPageFromTable(1);
+    })
+    .catch(error => {
+      alert('Ошибка при отправке данных УЕ: ' + error.message);
+      CloseModal(modalInvoice);
+      CloseModal(modalMoving);
+      CloseModal(modalMovingUE);
+    });
+  })
+  .catch(error => {
+    alert('Ошибка при создании накладной: ' + error.message);
+    CloseModal(modalInvoice);
+    CloseModal(modalMoving);
+    CloseModal(modalMovingUE);
+  });
+}
 
 
 
@@ -2701,413 +3216,6 @@ function AddCheckboxColumn(table) {
         }
     });
 }
-
-/*
-/////////////////////// СОЗДАНИЕ НАКЛАДНОЙ
-
-function ModalCreateInvoice() {
-
-    // Создаем окно
-    const modal = document.createElement('div');
-    modal.id = 'modalInvoice';
-    modal.setAttribute('class', 'modal');
-    document.body.appendChild(modal);
-
-    // Создаем оверлей
-    CreateOverlay(modal);
-
-    // Создаем и добавляем поля ввода для сотрудника
-    const employeeInput = document.createElement('input');
-    employeeInput.type = 'text';
-    employeeInput.id = 'Номер_сотрудника';
-    employeeInput.placeholder = 'Подписавший сотрудник';
-    employeeInput.setAttribute('name', 'Номер_сотрудника');
-    employeeInput.setAttribute('data-source', 'Сотрудник');
-    employeeInput.setAttribute('autocomplete', 'off');
-    employeeInput.setAttribute('readonly', true);
-    employeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
-    employeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
-    employeeInput.onfocus = function() {
-        DataSourceRowClick(this);
-    };
-    modal.appendChild(employeeInput);
-
-    const employeeLabel = document.createElement('label');
-    employeeLabel.textContent = 'Подписавший сотрудник: ';
-    modal.insertBefore(employeeLabel, employeeInput);
-
-    // Создаем и добавляем поля ввода для даты
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.id = 'Дата_подписания';
-    dateInput.placeholder = 'Дата создания накладной';
-    modal.appendChild(dateInput);
-
-    const dateLabel = document.createElement('label');
-    dateLabel.textContent = 'Дата создания накладной: ';
-    modal.insertBefore(dateLabel, dateInput);
-
-    // Создаем и добавляем select поле и его label
-    const actSelectLabel = document.createElement('label');
-    actSelectLabel.textContent = 'Укажите тип накладной: ';
-    modal.appendChild(actSelectLabel);
-
-    const actSelect = document.createElement('select');
-    actSelect.id = 'actType';
-    const actTypes = ['Акт поступления', 'Акт перемещения', 'Акт отправки'];
-    actTypes.forEach((type, index) => {
-        const option = document.createElement('option');
-        option.value = index + 1;
-        option.textContent = type;
-        actSelect.appendChild(option);
-    });
-    modal.appendChild(actSelect);
-
-    // Создаем контейнер для кнопок
-    const buttonsContainer = document.createElement('div');
-    buttonsContainer.setAttribute('class', 'container_buttons');
-
-    // Создаем кнопку закрыть
-    var closeButton = document.createElement('button');
-    closeButton.setAttribute('class', 'redButton');
-    closeButton.textContent = 'Закрыть';
-    closeButton.addEventListener('click', function() {
-        CloseModal(modal);
-    });
-
-    // Создаем кнопку отправки
-    const submitButton = document.createElement('button');
-    submitButton.textContent = 'Отправить';
-    submitButton.className = 'greenButton';
-    submitButton.disabled = true;
-    submitButton.addEventListener('click', function() {
-        const invoiceType = actSelect.value;
-        ModalCreateAct(invoiceType);
-    });
-
-    buttonsContainer.appendChild(submitButton);
-    buttonsContainer.appendChild(closeButton);
-
-    // Добавляем контейнер с кнопками в модальное окно
-    modal.appendChild(buttonsContainer);
-
-    // Обработчики событий для проверки заполнения полей
-    dateInput.addEventListener('change', () => CheckInputs(modal));
-    employeeInput.addEventListener('change', () => CheckInputs(modal));
-}
-
-function CheckInputs(modal) {
-    const inputs = modal.querySelectorAll('input');
-    const allFilled = Array.from(inputs).every(input => input.value);
-
-    // Находим кнопку "Отправить" по классу
-    const submitButton = modal.querySelector('.greenButton');
-
-    // Включаем или отключаем кнопку в зависимости от заполненности полей
-    if (allFilled) {
-        submitButton.disabled = false;
-    } else {
-        submitButton.disabled = true;
-    }
-}
-
-function ModalCreateAct(invoiceType) {
-
-  // Создаем окно
-  const modal = document.createElement('div');
-  let representativeInput = '';
-  let authorizingEmployeeInput = '';
-  let receivingEmployeeInput = '';
-  modal.className = 'modal';
-  modal.id = 'modalAct';
-
-  // Заголовок модального окна
-  let titleText = '';
-  switch (invoiceType) {
-    case "1":
-      titleText = 'Акт поступления';
-      modal.name = 'Акт_поступления';
-      break;
-    case "2":
-      titleText = 'Акт перемещения';
-      modal.name= 'Акт_перемещения';
-      break;
-    case "3":
-      titleText = 'Акт отправки';
-      modal.name = 'Акт_отправки';
-      break;
-    default:
-      titleText = 'Неизвестный тип акта';
-  }
-
-  const title = document.createElement('h2');
-  title.textContent = titleText;
-  modal.appendChild(title);
-
-  // Поля в зависимости от типа акта
-  if (invoiceType === "1" || invoiceType === "3") {
-    const representativeLabel = document.createElement('label');
-    representativeLabel.textContent = 'Представитель:';
-    representativeLabel.setAttribute('for', 'Номер_представителя');
-
-    representativeInput = document.createElement('input');
-    representativeInput.type = 'text';
-    representativeInput.id = 'Номер_представителя';
-    representativeInput.setAttribute('name', 'Номер_представителя');
-    representativeInput.setAttribute('data-source', 'Представитель');
-    representativeInput.setAttribute('autocomplete', 'off');
-    representativeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
-
-
-    representativeInput.setAttribute('data-columns-order', 'Номер_представителя, Имя, Фамилия, Отчество');
-    representativeInput.onfocus = function() {
-        DataSourceRowClick(this);
-    };
-
-    modal.appendChild(representativeLabel);
-    modal.appendChild(representativeInput);
-
-  } else if (invoiceType === "2") {
-    const authorizingEmployeeLabel = document.createElement('label');
-    authorizingEmployeeLabel.textContent = 'Санкционирующий сотрудник:';
-    authorizingEmployeeLabel.setAttribute('for', 'Санкционирующий');
-
-    authorizingEmployeeInput = document.createElement('input');
-    authorizingEmployeeInput.type = 'text';
-    authorizingEmployeeInput.id = 'Санкционирующий';
-    authorizingEmployeeInput.setAttribute('name', 'Номер_сотрудника');
-    authorizingEmployeeInput.setAttribute('data-source', 'Сотрудник');
-    authorizingEmployeeInput.setAttribute('autocomplete', 'off');
-    authorizingEmployeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
-    authorizingEmployeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
-
-    authorizingEmployeeInput.onfocus = function() {
-        DataSourceRowClick(this);
-    };
-
-    const receivingEmployeeLabel = document.createElement('label');
-    receivingEmployeeLabel.textContent = 'Принимающий сотрудник:';
-    receivingEmployeeLabel.setAttribute('for', 'Завершающий');
-
-    receivingEmployeeInput = document.createElement('input');
-    receivingEmployeeInput.type = 'text';
-    receivingEmployeeInput.id = 'Завершающий';
-    receivingEmployeeInput.setAttribute('name', 'Номер_сотрудника');
-    receivingEmployeeInput.setAttribute('data-source', 'Сотрудник');
-    receivingEmployeeInput.setAttribute('autocomplete', 'off');
-    receivingEmployeeInput.setAttribute('data-columns-order', 'Номер_сотрудника, Имя, Фамилия, Отчество');
-    receivingEmployeeInput.setAttribute('data-extended', 'Имя, Фамилия, Отчество');
-    receivingEmployeeInput.onfocus = function() {
-        DataSourceRowClick(this);
-    };
-
-    modal.appendChild(authorizingEmployeeLabel);
-    modal.appendChild(authorizingEmployeeInput);
-    modal.appendChild(receivingEmployeeLabel);
-    modal.appendChild(receivingEmployeeInput);
-  }
-
-  if (authorizingEmployeeInput) {
-    authorizingEmployeeInput.addEventListener('change', () => CheckInputs(modal));
-  }
-  if (receivingEmployeeInput) {
-    receivingEmployeeInput.addEventListener('change', () => CheckInputs(modal));
-  }
-  if (representativeInput) {
-    representativeInput.addEventListener('change', () => CheckInputs(modal));
-  }
-
-  // Контейнер для кнопок
-  const buttonsContainer = document.createElement('div');
-  buttonsContainer.className = 'container_buttons';
-
-  // Кнопка "Отправить"
-  const sendButton = document.createElement('button');
-  sendButton.textContent = 'Отправить';
-  sendButton.className = 'greenButton';
-  sendButton.disabled = true;
-  sendButton.addEventListener('click', () => {
-    SubmitInvoiceData(modal);
-
-  });
-
-  // Создаем кнопку закрыть
-  var closeButton = document.createElement('button');
-  closeButton.setAttribute('class', 'redButton');
-  closeButton.textContent = 'Закрыть';
-  closeButton.addEventListener('click', function() {
-      CloseModal(modal);
-  });
-
-  modal.appendChild(buttonsContainer);
-  buttonsContainer.appendChild(sendButton);
-  buttonsContainer.appendChild(closeButton);
-  document.body.appendChild(modal);
-  CreateOverlay(modal);
-}
-
-function SubmitInvoiceData(modal) {
-    const invoiceDateValue = document.getElementById('Дата_подписания').value;
-    const invoiceEmployeeNumberElement = document.getElementById('Номер_сотрудника');
-    const invoiceEmployeeNumberValue = invoiceEmployeeNumberElement.getAttribute('data-hidden') || invoiceEmployeeNumberElement.value;
-
-    const authorityCheckData = {
-        employeeId: invoiceEmployeeNumberValue,
-        authorityName: 'Может_подписать_накладную'
-    };
-
-    // Предварительный fetch запрос для проверки полномочий
-    return fetch('/checkPowers', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(authorityCheckData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.error || 'Network response was not ok');
-            });
-        }
-        // Если ответ успешен, переход к следующему Promise
-        return;
-    })
-    .then(() => {
-        const dataForInvoice = {
-            "Дата_подписания": invoiceDateValue,
-            "Номер_сотрудника": invoiceEmployeeNumberValue
-        };
-
-        const encodedInvoiceWord = encodeURIComponent('Накладная');
-
-        // Отправляем fetch запрос для накладной
-        return fetch(`/addData/${encodedInvoiceWord}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataForInvoice)
-        });
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.error || 'Network response was not ok');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Invoice Data Success:', data);
-        const invoiceNumber = data["Номер_накладной"];
-
-        return SubmitModalData(modal, invoiceNumber);
-    })
-    .catch(error => {
-        alert(error.message);
-    });
-}
-
-function SubmitModalData(modal, invoiceNumber) {
-    const actTypeElement = document.getElementById('actType');
-    const actTypeValue = actTypeElement.value;
-
-    if (actTypeValue === '1') {
-        const inputs = modal.querySelectorAll('input');
-        const dataForModal = {};
-
-        inputs.forEach(input => {
-            if (input.type !== 'radio' && !input.disabled) {
-                const hiddenValue = input.getAttribute('data-hidden');
-                dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
-            }
-        });
-
-        dataForModal["Номер_накладной"] = invoiceNumber;
-        handleModalDataSuccess(dataForModal, modal, invoiceNumber);
-        return;
-    }
-
-    let authorityName;
-    if (actTypeValue === '2') {
-        authorityName = 'Может_принять_поступление';
-    } else if (actTypeValue === '3') {
-        authorityName = 'Может_инициировать_акт_отправки';
-    }
-
-    const invoiceEmployeeNumberElement = document.getElementById('Номер_сотрудника');
-    const invoiceEmployeeNumberValue = invoiceEmployeeNumberElement.getAttribute('data-hidden') || invoiceEmployeeNumberElement.value;
-
-    const authorityCheckData = {
-        employeeId: invoiceEmployeeNumberValue,
-        authorityName: authorityName
-    };
-
-    // Предварительный fetch запрос для проверки полномочий
-    fetch('/checkPowers', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(authorityCheckData)
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.error || 'Network response was not ok');
-            });
-        }
-        // Если ответ успешен, переход к следующему Promise
-        return;
-    })
-    .then(() => {
-        const inputs = modal.querySelectorAll('input');
-        const dataForModal = {};
-
-        inputs.forEach(input => {
-            if (input.type !== 'radio' && !input.disabled) {
-                const hiddenValue = input.getAttribute('data-hidden');
-                dataForModal[input.id] = hiddenValue !== null ? hiddenValue : input.value;
-            }
-        });
-
-        dataForModal["Номер_накладной"] = invoiceNumber;
-        const modalId = modal.name;
-
-        // Отправляем fetch запрос для модального окна
-        return fetch(`/addData/${modalId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataForModal)
-        });
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.error || 'Network response was not ok');
-            });
-        }
-        return response.json();
-    })
-    .then(data => handleModalDataSuccess(data, modal, invoiceNumber))
-    .catch(error => console.error('Error:', error));
-}
-
-function handleModalDataSuccess(data, modal, invoiceNumber) {
-    console.log('Modal Data Success:', data);
-    GetPageFromTable(currentPage);
-
-    const UEMenu_number = document.getElementById('UEMenu_number');
-    UEMenu_number.textContent = invoiceNumber;
-
-    const modalInvoice = document.getElementById('modalInvoice');
-    CloseModal(modalInvoice);
-    CloseModal(modal);
-}
-*/
 
 function AttachInvoiceRowClick() {
     var tables = document.getElementsByName('Накладная');
